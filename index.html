@@ -4080,13 +4080,16 @@
                     
                     for (let line of lines) {
                         const trimmed = line.trim();
-                        if (trimmed === 'BUSINESS DATA') {
+                        // Check if line starts with section headers (handles trailing commas from CSV)
+                        if (trimmed.startsWith('BUSINESS DATA')) {
                             currentSection = 'business';
+                            console.log('Found BUSINESS DATA section');
                             continue;
-                        } else if (trimmed === 'AD CAMPAIGN DATA') {
+                        } else if (trimmed.startsWith('AD CAMPAIGN DATA')) {
                             currentSection = 'campaign';
+                            console.log('Found AD CAMPAIGN DATA section');
                             continue;
-                        } else if (trimmed === '' || trimmed.startsWith(',,')) {
+                        } else if (trimmed === '' || trimmed.replace(/,/g, '').trim() === '') {
                             continue; // Skip empty lines
                         }
                         
