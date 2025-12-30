@@ -1,0 +1,4365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aerovex Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafbfc;
+            color: #1a1d29;
+            padding: 0;
+            min-height: 100vh;
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background: #0f1419;
+            color: #e5e7eb;
+        }
+        
+        body.dark-mode .topbar {
+            background: rgba(17, 24, 39, 0.95);
+            border-bottom-color: #374151;
+        }
+        
+        body.dark-mode .logo {
+            filter: brightness(0) invert(1);
+        }
+        
+        body.dark-mode .settings-btn,
+        body.dark-mode .dark-mode-toggle {
+            background: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        
+        body.dark-mode .settings-btn:hover,
+        body.dark-mode .dark-mode-toggle:hover {
+            background: #4b5563;
+        }
+        
+        body.dark-mode .tab {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        
+        body.dark-mode .upload-section {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        
+        body.dark-mode .upload-section.active {
+            background: #1e3a5f;
+            border-color: #3b82f6;
+        }
+        
+        body.dark-mode .page-title,
+        body.dark-mode .section-title {
+            color: #f9fafb;
+        }
+        
+        body.dark-mode .page-subtitle {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .metric-card,
+        body.dark-mode .stat-card,
+        body.dark-mode .chart-section,
+        body.dark-mode .platform-card {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        
+        body.dark-mode .metric-card:hover,
+        body.dark-mode .stat-card:hover,
+        body.dark-mode .chart-section:hover {
+            border-color: #4b5563;
+        }
+        
+        body.dark-mode .metric-value,
+        body.dark-mode .stat-value,
+        body.dark-mode .platform-value {
+            color: #f9fafb;
+        }
+        
+        body.dark-mode .stat-card-header,
+        body.dark-mode .platform-name {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .stat-row {
+            border-bottom-color: #374151;
+        }
+        
+        body.dark-mode .margin-selector select {
+            background: #374151;
+            color: #e5e7eb;
+            border-color: #4b5563;
+        }
+        
+        body.dark-mode .file-name {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode table {
+            color: #e5e7eb;
+        }
+        
+        body.dark-mode th {
+            background: #374151 !important;
+            color: #9ca3af !important;
+        }
+        
+        body.dark-mode td {
+            border-bottom-color: #374151 !important;
+        }
+        
+        body.dark-mode .status-badge {
+            opacity: 0.9;
+        }
+        
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 24px 40px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        
+        .topbar-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .topbar-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .dark-mode-toggle {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 38px;
+        }
+        
+        .dark-mode-toggle:hover {
+            background: #e5e7eb;
+        }
+        
+        .logo {
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo img {
+            height: 100%;
+            width: auto;
+        }
+        
+        .settings-btn {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1d29;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            height: 38px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .settings-btn:hover {
+            background: #e5e7eb;
+        }
+        
+        .margin-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Outfit', sans-serif;
+            height: 38px;
+        }
+        
+        .margin-selector label {
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 13px;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        
+        .margin-selector select {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1d29;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            outline: none;
+            line-height: 1;
+        }
+        
+        .margin-selector select:hover {
+            border-color: #3b82f6;
+        }
+        
+        body.dark-mode .margin-selector {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        
+        body.dark-mode .margin-selector label {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .margin-selector select {
+            background: #1f2937;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        
+        .tabs {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            gap: 32px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        body.dark-mode .tabs {
+            border-bottom-color: #374151;
+        }
+        
+        .tab {
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .tab:hover {
+            color: #1a1d29;
+        }
+        
+        .tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .upload-section {
+            background: #ffffff;
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 32px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .upload-section.active {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+        
+        .upload-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+            font-family: 'Outfit', sans-serif;
+            margin-top: 12px;
+            margin-right: 8px;
+        }
+        
+        .upload-btn:hover {
+            background: #2563eb;
+        }
+        
+        .file-name {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6b7280;
+            font-style: italic;
+        }
+        
+        .margin-selector {
+            margin-top: 24px;
+        }
+        
+        .margin-selector label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1d29;
+            margin-right: 12px;
+        }
+        
+        .margin-selector select {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Outfit', sans-serif;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .page-header {
+            margin-bottom: 40px;
+            animation: fadeIn 0.6s ease-out;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .page-header-text {
+            flex: 1;
+        }
+        
+        .page-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #1a1d29;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .page-subtitle {
+            font-size: 15px;
+            color: #6b7280;
+            font-weight: 400;
+        }
+        
+        .tab-margin-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Outfit', sans-serif;
+            height: 38px;
+        }
+        
+        .tab-margin-selector label {
+            color: #6b7280;
+            font-weight: 500;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        
+        .tab-margin-selector select {
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1d29;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            outline: none;
+        }
+        
+        body.dark-mode .tab-margin-selector {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        
+        body.dark-mode .tab-margin-selector label {
+            color: #9ca3af;
+        }
+        
+        body.dark-mode .tab-margin-selector select {
+            background: #1f2937;
+            border-color: #4b5563;
+            color: #f3f4f6;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.1s both;
+        }
+        
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            border-color: #d1d5db;
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .metric-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1d29;
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+        
+        .metric-subtext {
+            font-size: 13px;
+            color: #9ca3af;
+            font-weight: 400;
+        }
+        
+        .positive {
+            color: #10b981;
+        }
+        
+        .negative {
+            color: #ef4444;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1d29;
+            margin-bottom: 20px;
+            letter-spacing: -0.01em;
+        }
+        
+        .chart-section {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            animation: fadeIn 0.8s ease-out 0.3s both;
+        }
+        
+        .chart-section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1d29;
+            margin-bottom: 28px;
+            letter-spacing: -0.01em;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 380px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .stat-card-header {
+            font-size: 14px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            font-weight: 400;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            color: #1a1d29;
+            font-weight: 600;
+        }
+        
+        .platform-grid {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        @media (max-width: 900px) {
+            .platform-grid {
+                flex-direction: column;
+            }
+        }
+        
+        .butterfly-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 40px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        body.dark-mode .butterfly-card {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        
+        .butterfly-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .profit-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            width: 280px;
+            flex-shrink: 0;
+        }
+        
+        body.dark-mode .profit-card {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        
+        .profit-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .profit-card-title {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        
+        .profit-card-total {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        
+        .profit-card-total-label {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        
+        .profit-card-total-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1d29;
+        }
+        
+        body.dark-mode .profit-card-total-value {
+            color: #f9fafb;
+        }
+        
+        .profit-item {
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .profit-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .profit-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .profit-item-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .profit-item-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .profit-item-name {
+            font-size: 14px;
+            color: #374151;
+        }
+        
+        body.dark-mode .profit-item-name {
+            color: #e5e7eb;
+        }
+        
+        .profit-item-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1d29;
+        }
+        
+        body.dark-mode .profit-item-value {
+            color: #f9fafb;
+        }
+        
+        .profit-item-percent {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        
+        .butterfly-header {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 36px;
+        }
+        
+        .butterfly-legend {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .butterfly-legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        
+        .butterfly-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+        
+        .butterfly-row {
+            display: flex;
+            align-items: center;
+        }
+        
+        .butterfly-bar-left {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .butterfly-bar-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .butterfly-label {
+            width: 100px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: #374151;
+            padding: 0 16px;
+        }
+        
+        body.dark-mode .butterfly-label {
+            color: #e5e7eb;
+        }
+        
+        .butterfly-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            min-width: 80px;
+        }
+        
+        .butterfly-value-left {
+            text-align: right;
+        }
+        
+        .butterfly-value-right {
+            text-align: left;
+        }
+        
+        .butterfly-track {
+            flex: 1;
+            max-width: 280px;
+            height: 32px;
+            background: #f3f4f6;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        body.dark-mode .butterfly-track {
+            background: #374151;
+        }
+        
+        .butterfly-track-left {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .butterfly-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        
+        .butterfly-fill-meta {
+            background: #0095F6;
+        }
+        
+        .butterfly-fill-google {
+            background: #34A853;
+        }
+        
+        /* Scorecard Styles */
+        .platform-comparison {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        body.dark-mode .platform-comparison {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        
+        .progress-comparison {
+            padding: 0;
+        }
+        
+        .progress-row {
+            margin-bottom: 32px;
+        }
+        
+        .progress-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .progress-label {
+            font-weight: 600;
+            color: #1a1d29;
+            margin-bottom: 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        body.dark-mode .progress-label {
+            color: #f9fafb;
+        }
+        
+        .progress-bar-container {
+            position: relative;
+            height: 48px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        body.dark-mode .progress-bar-container {
+            background: #374151;
+        }
+        
+        .progress-bar-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-bar-segment.meta {
+            background: #0095F6;
+        }
+        
+        .progress-bar-segment.google {
+            background: #34A853;
+        }
+        
+        .progress-legend {
+            display: flex;
+            gap: 24px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        body.dark-mode .progress-legend {
+            color: #9ca3af;
+        }
+        
+        .progress-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .progress-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .progress-legend-dot.meta {
+            background: #0095F6;
+        }
+        
+        .progress-legend-dot.google {
+            background: #34A853;
+        }
+        
+        /* Recovered Cart Revenue Styles */
+        .cart-revenue-section {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 32px;
+            margin-top: 32px;
+        }
+        
+        body.dark-mode .cart-revenue-section {
+            background: #1f2937;
+            border-color: #374151;
+        }
+        
+        .cart-revenue-chart-container {
+            position: relative;
+            height: 280px;
+            margin-top: 24px;
+        }
+        
+        .cart-y-axis {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 30px;
+            width: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-right: 12px;
+        }
+        
+        .cart-y-label {
+            font-size: 12px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        
+        .cart-chart-area {
+            position: absolute;
+            left: 60px;
+            right: 0;
+            top: 0;
+            bottom: 30px;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            padding: 0 16px;
+        }
+        
+        .cart-grid {
+            position: absolute;
+            left: 60px;
+            right: 0;
+            top: 0;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .cart-grid-line {
+            height: 1px;
+            background: #f3f4f6;
+        }
+        
+        body.dark-mode .cart-grid-line {
+            background: #374151;
+        }
+        
+        .cart-bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: flex-end;
+        }
+        
+        .cart-bar {
+            width: 100%;
+            background: linear-gradient(to top, #3b82f6, #60a5fa);
+            border-radius: 6px 6px 0 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .cart-bar:hover {
+            background: linear-gradient(to top, #2563eb, #3b82f6);
+            transform: scaleY(1.02);
+        }
+        
+        .cart-bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+        }
+        
+        body.dark-mode .cart-bar-value {
+            color: #e5e7eb;
+        }
+        
+        .cart-x-axis {
+            position: absolute;
+            left: 60px;
+            right: 0;
+            bottom: 0;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 16px;
+        }
+        
+        .cart-x-label {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .cart-x-label {
+            color: #9ca3af;
+        }
+        
+        .cart-summary-stats {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        body.dark-mode .cart-summary-stats {
+            border-top-color: #374151;
+        }
+        
+        .cart-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .cart-stat-label {
+            font-size: 13px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        
+        body.dark-mode .cart-stat-label {
+            color: #9ca3af;
+        }
+        
+        .cart-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1d29;
+        }
+        
+        body.dark-mode .cart-stat-value {
+            color: #f9fafb;
+        }
+        
+        .cart-stat-trend {
+            font-size: 13px;
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 24px;
+        }
+        
+        th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-excellent { background: #d1fae5; color: #065f46; }
+        .status-good { background: #dbeafe; color: #1e40af; }
+        .status-okay { background: #fef3c7; color: #92400e; }
+        .status-poor { background: #fee2e2; color: #991b1b; }
+        
+        .dashboard-content {
+            display: none;
+        }
+        
+        .dashboard-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 24px 20px;
+            }
+            
+            .topbar {
+                padding: 20px 20px 0;
+            }
+            
+            .page-title {
+                font-size: 24px;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                gap: 16px;
+            }
+        }
+        
+        /* Footer */
+        .site-footer {
+            text-align: center;
+            padding: 24px;
+            color: #9ca3af;
+            font-size: 13px;
+            margin-top: 40px;
+        }
+        
+        body.dark-mode .site-footer {
+            color: #6b7280;
+        }
+        
+        /* Sparklines Cards */
+        .sparklines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        
+        .spark-card {
+            background: rgba(31, 41, 55, 0.7);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+        
+        body:not(.dark-mode) .spark-card {
+            background: #ffffff;
+            border-color: #e5e7eb;
+        }
+        
+        .spark-card:hover {
+            border-color: #4b5563;
+            transform: translateY(-2px);
+        }
+        
+        body:not(.dark-mode) .spark-card:hover {
+            border-color: #d1d5db;
+        }
+        
+        .spark-info {
+            flex: 1;
+        }
+        
+        .spark-label {
+            font-size: 13px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .spark-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        
+        body:not(.dark-mode) .spark-value {
+            color: #1a1d29;
+        }
+        
+        .spark-change {
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .spark-change.up { color: #22c55e; }
+        .spark-change.down { color: #ef4444; }
+        .spark-change.neutral { color: #9ca3af; }
+        
+        .sparkline-container {
+            width: 100px;
+            height: 50px;
+        }
+        
+        .sparkline-container svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .spark-line {
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+        .spark-area {
+            opacity: 0.2;
+        }
+        
+        .line-green { stroke: #22c55e; }
+        .area-green { fill: #22c55e; }
+        .line-blue { stroke: #3b82f6; }
+        .area-blue { fill: #3b82f6; }
+        .line-purple { stroke: #a855f7; }
+        .area-purple { fill: #a855f7; }
+        .line-amber { stroke: #f59e0b; }
+        .area-amber { fill: #f59e0b; }
+        .line-red { stroke: #ef4444; }
+        .area-red { fill: #ef4444; }
+        .line-cyan { stroke: #06b6d4; }
+        .area-cyan { fill: #06b6d4; }
+        
+        /* Chat Sidebar Styles */
+        .chat-toggle {
+            position: fixed;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px 0 0 12px;
+            padding: 14px 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            box-shadow: -4px 0 20px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-family: 'Outfit', sans-serif;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+        
+        .chat-toggle:hover {
+            padding-right: 14px;
+            box-shadow: -6px 0 24px rgba(59, 130, 246, 0.4);
+        }
+        
+        .chat-toggle.active {
+            display: none;
+        }
+        
+        .chat-icon {
+            font-size: 18px;
+            writing-mode: horizontal-tb;
+        }
+        
+        .chat-label {
+            letter-spacing: 1px;
+        }
+        
+        .chat-panel {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 420px;
+            height: 100vh;
+            background: white;
+            box-shadow: -4px 0 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 1001;
+            font-family: 'Outfit', sans-serif;
+            transition: right 0.3s ease;
+        }
+        
+        .chat-panel.open {
+            right: 0;
+        }
+        
+        body.dark-mode .chat-panel {
+            background: #1f2937;
+            box-shadow: -4px 0 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 22px 26px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .chat-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        
+        .chat-message {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 18px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        .chat-message.user {
+            background: #3b82f6;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .chat-message.assistant {
+            background: #f3f4f6;
+            color: #1a1d29;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        
+        body.dark-mode .chat-message.assistant {
+            background: #374151;
+            color: #e5e7eb;
+        }
+        
+        .chat-message.assistant .message-content ul {
+            margin: 10px 0 0 0;
+            padding-left: 22px;
+        }
+        
+        .chat-message.assistant .message-content li {
+            margin: 6px 0;
+        }
+        
+        .chat-message.loading .message-content::after {
+            content: '';
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #9ca3af;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .chat-input-area {
+            padding: 22px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 12px;
+        }
+        
+        body.dark-mode .chat-input-area {
+            border-top-color: #374151;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            font-family: 'Outfit', sans-serif;
+            transition: border-color 0.2s;
+        }
+        
+        .chat-input:focus {
+            border-color: #3b82f6;
+        }
+        
+        body.dark-mode .chat-input {
+            background: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+        
+        .chat-send {
+            width: 52px;
+            height: 52px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        
+        .chat-send:hover {
+            background: #2563eb;
+        }
+        
+        .chat-send:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 480px) {
+            .chat-panel {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .chat-panel.open {
+                right: 0;
+            }
+            
+            .chat-toggle {
+                top: auto;
+                bottom: 20px;
+                right: 20px;
+                transform: none;
+                border-radius: 50px;
+                padding: 12px 16px;
+                writing-mode: horizontal-tb;
+                flex-direction: row;
+            }
+            
+            .chat-label {
+                letter-spacing: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-content">
+            <div class="logo">
+                <img src="logo.png" alt="Aerovex Systems">
+                <span style="margin-left: 12px; font-size: 12px; color: #9ca3af; font-weight: 500;">v1.0</span>
+            </div>
+            <div class="topbar-actions">
+                <button class="dark-mode-toggle" onclick="toggleDarkMode()" id="darkModeBtn">🌙</button>
+                <button class="settings-btn" onclick="toggleUpload()">Upload Data</button>
+            </div>
+        </div>
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('business')">Business Overview</div>
+            <div class="tab" onclick="switchTab('campaigns')">Ad Campaign Performance</div>
+            <div class="tab" onclick="switchTab('revenue')">Revenue Breakdown</div>
+            <div class="tab" onclick="switchTab('trends')">Monthly Trends</div>
+            <div class="tab" onclick="switchTab('summary')">Executive Summary</div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Campaign Performance Tab -->
+        <div class="tab-content" id="campaignsTab">
+            <div class="upload-section" id="campaignUploadSection">
+                <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Upload Campaign Data</h2>
+                <p style="color: #6b7280; margin-bottom: 24px;">Upload your combined Ad Campaign CSV (includes both Meta and Google data)</p>
+                
+                <input type="file" id="campaignFile" accept=".csv" style="display: none;" onchange="handleCampaignUpload(event)">
+                <label for="campaignFile" class="upload-btn">Ad Campaign CSV</label>
+                <div class="file-name" id="campaignFileName">No file selected</div>
+            </div>
+            
+            <div class="dashboard-content" id="campaignDashboardContent">
+                <div class="page-header">
+                    <div class="page-header-text">
+                        <h1 class="page-title">Ad Campaign Performance</h1>
+                        <p class="page-subtitle" id="campaignPageSubtitle"></p>
+                    </div>
+                    <div class="tab-margin-selector">
+                        <label for="campaignMargin">Margin:</label>
+                        <select id="campaignMargin" onchange="updateAllTabs(event)">
+                            <option value="0.30">30%</option>
+                            <option value="0.35">35%</option>
+                            <option value="0.40">40%</option>
+                            <option value="0.45">45%</option>
+                            <option value="0.50">50%</option>
+                            <option value="0.55">55%</option>
+                            <option value="0.60" selected>60%</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h2 class="section-title">Overview</h2>
+                <div class="metrics-grid" id="campaignMetrics"></div>
+                
+                <h2 class="section-title">Platform Comparison</h2>
+                <div class="platform-comparison" id="platformComparison">
+                    <div class="progress-comparison" id="progressComparison"></div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>Campaign Performance Map</h2>
+                    <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">Bubble size = Ad Spend • Right & up = better performance • Green = profitable</p>
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="campaignBubbleChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Campaign Performance -->
+                <div class="chart-section">
+                    <h2>Campaign Performance</h2>
+                    <p style="color: #6b7280; margin-bottom: 24px;">All campaigns ranked by ROAS with key performance metrics</p>
+                    <div id="topCampaignCards"></div>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Revenue Breakdown Tab -->
+        <div class="tab-content" id="revenueTab">
+            <div class="dashboard-content active" id="revenueDashboardContent">
+                <div class="page-header">
+                    <div class="page-header-text">
+                        <h1 class="page-title">Revenue Breakdown</h1>
+                        <p class="page-subtitle" id="revenuePageSubtitle">All revenue channels and traffic metrics</p>
+                    </div>
+                </div>
+                
+                <h2 class="section-title" id="revenueCurrentMonthTitle">Current Month Performance</h2>
+                <div class="metrics-grid" id="revenueMetrics"></div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+                    <div class="chart-section">
+                        <h2>Revenue by Channel</h2>
+                        <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">Your three main revenue streams</p>
+                        <div class="chart-container">
+                            <canvas id="revenueChannelChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-section">
+                        <h2>Website Sales Attribution</h2>
+                        <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">Where your website sales are coming from</p>
+                        <div class="chart-container">
+                            <canvas id="revenueAttributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>Individual Channel Trends</h2>
+                    <p style="color: #6b7280; margin-bottom: 16px; font-size: 14px;">Track each revenue channel's performance independently</p>
+                    <div class="chart-container">
+                        <canvas id="revenueLineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Business Overview Tab -->
+        <div class="tab-content active" id="businessTab">
+            <div class="upload-section" id="businessUploadSection">
+                <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 12px;">Upload Business Data</h2>
+                <p style="color: #6b7280; margin-bottom: 24px;">Upload your monthly business metrics CSV</p>
+                
+                <input type="file" id="businessFile" accept=".csv" style="display: none;" onchange="handleBusinessUpload(event)">
+                <label for="businessFile" class="upload-btn">Choose CSV File</label>
+                <div class="file-name" id="businessFileName">No file selected</div>
+            </div>
+            
+            <div class="dashboard-content" id="businessDashboardContent">
+                <div class="page-header">
+                    <div class="page-header-text">
+                        <h1 class="page-title">Total Business Overview</h1>
+                        <p class="page-subtitle" id="businessPageSubtitle"></p>
+                    </div>
+                    <div class="tab-margin-selector">
+                        <label for="businessMargin">Margin:</label>
+                        <select id="businessMargin" onchange="updateAllTabs(event)">
+                            <option value="0.30">30%</option>
+                            <option value="0.35">35%</option>
+                            <option value="0.40">40%</option>
+                            <option value="0.45">45%</option>
+                            <option value="0.50">50%</option>
+                            <option value="0.55">55%</option>
+                            <option value="0.60" selected>60%</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h2 class="section-title" id="currentMonthTitle">Current Month Performance</h2>
+                <div class="metrics-grid" id="businessMetrics"></div>
+                
+                <h2 class="section-title" style="margin-top: 40px;">Advertising Performance</h2>
+                <div class="chart-section">
+                    <table id="adComparisonTable" style="width: 100%; border-collapse: collapse;"></table>
+                    <p id="breakevenNote" style="color: #6b7280; margin-top: 16px; font-size: 13px;"></p>
+                </div>
+                
+                <h2 class="section-title">Sales Channel Breakdown</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">Website Sales</div>
+                        <div id="websiteStats"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">Lucas Sales</div>
+                        <div id="lucasStats"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">Affiliate Sales</div>
+                        <div id="affiliateStats"></div>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>Monthly Revenue Trends</h2>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>Ad Spend & Revenue</h2>
+                    <div class="chart-container">
+                        <canvas id="adChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>Website Traffic</h2>
+                    <div class="chart-container">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Monthly Trends Tab -->
+        <div class="tab-content" id="trendsTab">
+            <div class="dashboard-content active" id="trendsDashboardContent">
+                <div class="page-header">
+                    <div class="page-header-text">
+                        <h1 class="page-title">Monthly Trends</h1>
+                        <p class="page-subtitle" id="trendsPageSubtitle">Month-over-month performance changes</p>
+                    </div>
+                    <div class="tab-margin-selector">
+                        <label for="trendsMargin">Margin:</label>
+                        <select id="trendsMargin" onchange="updateAllTabs(event)">
+                            <option value="0.30">30%</option>
+                            <option value="0.35">35%</option>
+                            <option value="0.40">40%</option>
+                            <option value="0.45">45%</option>
+                            <option value="0.50">50%</option>
+                            <option value="0.55">55%</option>
+                            <option value="0.60" selected>60%</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h2 class="section-title">This Month vs Last Month</h2>
+                <div class="metrics-grid" id="trendsMetrics"></div>
+                
+                <div class="chart-section">
+                    <h2>Revenue Trend</h2>
+                    <div class="chart-container">
+                        <canvas id="revenueTrendChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>ROAS Trend</h2>
+                    <div class="chart-container">
+                        <canvas id="roasTrendChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>Traffic Trend</h2>
+                    <div class="chart-container">
+                        <canvas id="trafficTrendChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2>Monthly Performance Summary</h2>
+                    <table id="trendsSummaryTable"></table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Executive Summary Tab -->
+        <div class="tab-content" id="summaryTab">
+            <div class="dashboard-content active" id="summaryDashboardContent">
+                <div class="page-header">
+                    <div class="page-header-text">
+                        <h1 class="page-title">Executive Summary</h1>
+                        <p class="page-subtitle" id="summaryPageSubtitle">Quick overview of business health</p>
+                    </div>
+                    <div class="tab-margin-selector">
+                        <label for="summaryMargin">Margin:</label>
+                        <select id="summaryMargin" onchange="updateAllTabs(event)">
+                            <option value="0.30">30%</option>
+                            <option value="0.35">35%</option>
+                            <option value="0.40">40%</option>
+                            <option value="0.45">45%</option>
+                            <option value="0.50">50%</option>
+                            <option value="0.55">55%</option>
+                            <option value="0.60" selected>60%</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h2 class="section-title">Key Metrics</h2>
+                <div class="metrics-grid" id="summaryMetrics"></div>
+                
+                <h2 class="section-title">On Pace For (End of Month)</h2>
+                <div class="metrics-grid" id="summaryForecast"></div>
+                
+                <h2 class="section-title">Performance Trends</h2>
+                <div class="sparklines-grid" id="sparklineCards"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="site-footer">
+        made with 🧀 in madison wi by WeaverCo
+    </footer>
+    
+    <!-- AI Chat Interface -->
+    <button class="chat-toggle" id="chatToggle" onclick="toggleChat()">
+        <span class="chat-icon">💬</span>
+        <span class="chat-label">Ask AI</span>
+    </button>
+    
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+            <div class="chat-header-title">
+                <span style="font-size: 20px;">✨</span>
+                <span>Dashboard Assistant</span>
+            </div>
+            <button class="chat-close" onclick="toggleChat()">×</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-message assistant">
+                <div class="message-content">Hey! I can help you understand your dashboard data. Try asking things like:
+                    <ul style="margin: 10px 0 0 18px; padding: 0;">
+                        <li>How are my ads performing?</li>
+                        <li>Which channel is most profitable?</li>
+                        <li>What should I focus on?</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask about your data..." onkeypress="handleChatKeypress(event)">
+            <button class="chat-send" id="chatSend" onclick="sendChatMessage()">→</button>
+        </div>
+    </div>
+    
+    <script>
+        // Global variables
+        let metaData = null;
+        let googleData = null;
+        let businessData = null;
+        let campaignBubbleChart = null;
+        let campaignProfitChart = null;
+        let revenueChart = null;
+        let adChart = null;
+        let trafficChart = null;
+        let revenueTrendChart = null;
+        let roasTrendChart = null;
+        let trafficTrendChart = null;
+        let revenueChannelChart = null;
+        let revenueAttributionChart = null;
+        let revenueLineChart = null;
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Update tab styling
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            if (tabName === 'campaigns') {
+                document.getElementById('campaignsTab').classList.add('active');
+            } else if (tabName === 'business') {
+                document.getElementById('businessTab').classList.add('active');
+            } else if (tabName === 'revenue') {
+                document.getElementById('revenueTab').classList.add('active');
+                if (businessData) {
+                    updateRevenueDashboard();
+                }
+            } else if (tabName === 'trends') {
+                document.getElementById('trendsTab').classList.add('active');
+                if (businessData) {
+                    updateTrendsDashboard();
+                }
+            } else if (tabName === 'summary') {
+                document.getElementById('summaryTab').classList.add('active');
+                if (businessData) {
+                    updateSummaryDashboard();
+                }
+            }
+        }
+        
+        // Dark mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('darkModeBtn').textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+            
+            // Update charts
+            updateCampaignChartColors();
+            updateBusinessChartColors();
+            updateTrendsChartColors();
+            if (businessData) {
+                updateSummaryDashboard();
+            }
+        }
+        
+        function updateAllTabs(event) {
+            // Get the margin from the selector that triggered this
+            const newMargin = event.target.value;
+            
+            // Sync all margin selectors to the same value
+            const marginSelectors = ['businessMargin', 'campaignMargin', 'trendsMargin', 'summaryMargin'];
+            marginSelectors.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = newMargin;
+            });
+            
+            // Update all dashboards
+            if (metaData && googleData) {
+                updateCampaignDashboard();
+            }
+            if (businessData) {
+                updateBusinessDashboard();
+                updateTrendsDashboard();
+                updateSummaryDashboard();
+            }
+        }
+        
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            document.getElementById('darkModeBtn').textContent = '☀️';
+        }
+        
+        function updateCampaignChartColors() {
+            if (metaData && googleData) {
+                createCampaignCharts();
+            }
+        }
+        
+        function updateBusinessChartColors() {
+            if (businessData) {
+                createBusinessCharts();
+            }
+        }
+        
+        function updateTrendsChartColors() {
+            if (businessData) {
+                createTrendsCharts();
+            }
+        }
+        
+        // Upload toggle
+        function toggleUpload() {
+            const activeTab = document.querySelector('.tab.active').textContent;
+            if (activeTab.includes('Campaign')) {
+                const section = document.getElementById('campaignUploadSection');
+                section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            } else {
+                const section = document.getElementById('businessUploadSection');
+                section.style.display = section.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        // Utility functions
+        function formatCurrency(value) {
+            return '$' + Math.round(value).toLocaleString();
+        }
+        
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
+        // ==========================================
+        // CAMPAIGN PERFORMANCE CODE
+        // ==========================================
+        
+        function handleCampaignUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('campaignFileName').textContent = file.name;
+                Papa.parse(file, {
+                    header: true,
+                    complete: function(results) {
+                        const parsed = parseCombinedCampaignData(results.data);
+                        metaData = parsed.metaData;
+                        googleData = parsed.googleData;
+                        if (metaData && googleData) {
+                            document.getElementById('campaignUploadSection').style.display = 'none';
+                            updateCampaignDashboard();
+                        }
+                    }
+                });
+            }
+        }
+        
+        function parseCombinedCampaignData(data) {
+            const metaCampaigns = [];
+            const googleCampaigns = [];
+            let startDate = null;
+            let endDate = null;
+            
+            data.forEach(row => {
+                const platform = row['Platform']?.trim().toLowerCase();
+                const campaignName = row['Campaign Name']?.trim();
+                
+                // Capture date range from first row that has it
+                if (!startDate && row['Start Date']) {
+                    startDate = row['Start Date'];
+                }
+                if (row['End Date']) {
+                    endDate = row['End Date'];
+                }
+                
+                if (campaignName && campaignName !== '') {
+                    const campaign = {
+                        name: campaignName,
+                        spend: parseFloat(row['Cost']?.replace(/[$,]/g, '')) || 0,
+                        revenue: parseFloat(row['Revenue']?.replace(/[$,]/g, '')) || 0,
+                        clicks: parseInt(row['Clicks']?.replace(/,/g, '')) || 0
+                    };
+                    
+                    console.log(`Parsing ${platform} campaign: ${campaignName}`, campaign);
+                    
+                    if (platform === 'meta') {
+                        metaCampaigns.push(campaign);
+                    } else if (platform === 'google') {
+                        googleCampaigns.push(campaign);
+                    }
+                }
+            });
+            
+            // Default to current month if no dates provided
+            if (!startDate || !endDate) {
+                const now = new Date();
+                startDate = `${now.getMonth() + 1}/1/${now.getFullYear()}`;
+                endDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+            }
+            
+            console.log(`Parsed ${metaCampaigns.length} Meta campaigns and ${googleCampaigns.length} Google campaigns`);
+            console.log('Google campaigns:', googleCampaigns.map(c => c.name));
+            
+            return {
+                metaData: { campaigns: metaCampaigns, startDate, endDate },
+                googleData: { campaigns: googleCampaigns }
+            };
+        }
+        
+        // Keep legacy parsers for backwards compatibility with old CSV formats
+        function parseMetaData(data) {
+            const campaigns = [];
+            let startDate = null;
+            let endDate = null;
+            
+            data.forEach(row => {
+                if (row['Campaign name'] && row['Campaign name'].trim() !== '') {
+                    if (!startDate) startDate = row['Reporting starts'];
+                    endDate = row['Reporting ends'];
+                    
+                    campaigns.push({
+                        name: row['Campaign name'],
+                        spend: parseFloat(row['Amount spent (USD)']?.replace(/,/g, '')) || 0,
+                        revenue: parseFloat(row['Purchases conversion value']?.replace(/,/g, '')) || 0,
+                        purchases: parseInt(row['Results']) || 0,
+                        clicks: parseInt(row['Clicks (all)']) || 0
+                    });
+                }
+            });
+            
+            return { campaigns, startDate, endDate };
+        }
+        
+        function parseGoogleData(data) {
+            const campaigns = [];
+            
+            data.forEach(row => {
+                if (row['Campaign Name'] && row['Campaign Name'].trim() !== '') {
+                    campaigns.push({
+                        name: row['Campaign Name'],
+                        spend: parseFloat(row['Cost']?.replace(/[$,]/g, '')) || 0,
+                        revenue: parseFloat(row['Conv. value']?.replace(/[$,]/g, '')) || 0,
+                        clicks: parseInt(row['Clicks']?.replace(/,/g, '')) || 0
+                    });
+                }
+            });
+            
+            return { campaigns };
+        }
+        
+        function calculateCampaignMetrics() {
+            if (!metaData || !googleData) return null;
+            
+            const margin = parseFloat(document.getElementById('campaignMargin').value);
+            const breakevenRoas = 1 / margin;
+            
+            const allCampaigns = [
+                ...metaData.campaigns.map(c => ({ ...c, platform: 'Meta' })),
+                ...googleData.campaigns.map(c => ({ ...c, platform: 'Google' }))
+            ];
+            
+            const totalSpend = allCampaigns.reduce((sum, c) => sum + c.spend, 0);
+            const totalRevenue = allCampaigns.reduce((sum, c) => sum + c.revenue, 0);
+            const totalClicks = allCampaigns.reduce((sum, c) => sum + c.clicks, 0);
+            const totalPurchases = metaData.campaigns.reduce((sum, c) => sum + c.purchases, 0);
+            
+            const roas = totalSpend > 0 ? totalRevenue / totalSpend : 0;
+            const grossProfit = totalRevenue * margin;
+            const netProfit = grossProfit - totalSpend;
+            
+            const metaSpend = metaData.campaigns.reduce((sum, c) => sum + c.spend, 0);
+            const metaRevenue = metaData.campaigns.reduce((sum, c) => sum + c.revenue, 0);
+            const metaClicks = metaData.campaigns.reduce((sum, c) => sum + c.clicks, 0);
+            const metaRoas = metaSpend > 0 ? metaRevenue / metaSpend : 0;
+            
+            const googleSpend = googleData.campaigns.reduce((sum, c) => sum + c.spend, 0);
+            const googleRevenue = googleData.campaigns.reduce((sum, c) => sum + c.revenue, 0);
+            const googleClicks = googleData.campaigns.reduce((sum, c) => sum + c.clicks, 0);
+            const googleRoas = googleSpend > 0 ? googleRevenue / googleSpend : 0;
+            
+            const startDate = new Date(metaData.startDate);
+            const endDate = new Date(metaData.endDate);
+            const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            
+            return {
+                total: { spend: totalSpend, revenue: totalRevenue, roas, grossProfit, netProfit, clicks: totalClicks, purchases: totalPurchases },
+                meta: { spend: metaSpend, revenue: metaRevenue, roas: metaRoas, clicks: metaClicks },
+                google: { spend: googleSpend, revenue: googleRevenue, roas: googleRoas, clicks: googleClicks },
+                breakevenRoas,
+                margin,
+                days,
+                dateRange: `${formatDate(metaData.startDate)} - ${formatDate(metaData.endDate)}`
+            };
+        }
+        
+        function updateCampaignDashboard() {
+            const metrics = calculateCampaignMetrics();
+            if (!metrics) return;
+            
+            const margin = parseFloat(document.getElementById('campaignMargin').value);
+            
+            document.getElementById('campaignDashboardContent').classList.add('active');
+            document.getElementById('campaignPageSubtitle').textContent = 
+                `${metrics.dateRange} • ${(margin * 100)}% profit margin • ${metrics.total.roas.toFixed(2)}x blended ROAS`;
+            
+            // Overview metrics
+            let metricsHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total Ad Spend</div>
+                    <div class="metric-value">${formatCurrency(metrics.total.spend)}</div>
+                    <div class="metric-subtext">${formatCurrency(metrics.total.spend / metrics.days)}/day</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Revenue from Ads</div>
+                    <div class="metric-value">${formatCurrency(metrics.total.revenue)}</div>
+                    <div class="metric-subtext">${formatCurrency(metrics.total.revenue / metrics.days)}/day</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">ROAS</div>
+                    <div class="metric-value">${metrics.total.roas.toFixed(2)}x</div>
+                    <div class="metric-subtext">Break-even: ${metrics.breakevenRoas.toFixed(1)}x</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Ad Net Profit</div>
+                    <div class="metric-value positive">${formatCurrency(metrics.total.netProfit)}</div>
+                    <div class="metric-subtext">${formatCurrency(metrics.total.netProfit / metrics.days)}/day</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Ad Clicks</div>
+                    <div class="metric-value">${metrics.total.clicks.toLocaleString()}</div>
+                    <div class="metric-subtext">${metrics.total.purchases} purchases</div>
+                </div>
+            `;
+            document.getElementById('campaignMetrics').innerHTML = metricsHTML;
+            
+            // Calculate profit values
+            const metaProfit = (metrics.meta.revenue * metrics.margin) - metrics.meta.spend;
+            const googleProfit = (metrics.google.revenue * metrics.margin) - metrics.google.spend;
+            const totalProfit = metaProfit + googleProfit;
+            const metaProfitPct = totalProfit > 0 ? (metaProfit / totalProfit) * 100 : 50;
+            const googleProfitPct = totalProfit > 0 ? (googleProfit / totalProfit) * 100 : 50;
+            
+            // Calculate ROAS
+            const metaRoas = metrics.meta.spend > 0 ? metrics.meta.revenue / metrics.meta.spend : 0;
+            const googleRoas = metrics.google.spend > 0 ? metrics.google.revenue / metrics.google.spend : 0;
+            
+            // Progress bar comparison
+            const metrics_to_compare = [
+                {
+                    label: 'Ad Spend',
+                    meta: metrics.meta.spend,
+                    google: metrics.google.spend,
+                    formatter: formatCurrency
+                },
+                {
+                    label: 'Revenue',
+                    meta: metrics.meta.revenue,
+                    google: metrics.google.revenue,
+                    formatter: formatCurrency
+                },
+                {
+                    label: 'ROAS',
+                    meta: metaRoas,
+                    google: googleRoas,
+                    formatter: (val) => val.toFixed(2) + 'x'
+                },
+                {
+                    label: 'Profit',
+                    meta: metaProfit,
+                    google: googleProfit,
+                    formatter: formatCurrency
+                },
+                {
+                    label: 'Clicks',
+                    meta: metrics.meta.clicks,
+                    google: metrics.google.clicks,
+                    formatter: (val) => val.toLocaleString()
+                }
+            ];
+            
+            let progressHTML = '';
+            metrics_to_compare.forEach(metric => {
+                const total = metric.meta + metric.google;
+                const metaPercent = total > 0 ? (metric.meta / total * 100) : 50;
+                const googlePercent = total > 0 ? (metric.google / total * 100) : 50;
+                
+                progressHTML += `
+                    <div class="progress-row">
+                        <div class="progress-label">${metric.label}</div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-segment meta" style="width: ${metaPercent}%;">
+                                ${metric.formatter(metric.meta)} (${Math.round(metaPercent)}%)
+                            </div>
+                            <div class="progress-bar-segment google" style="width: ${googlePercent}%;">
+                                ${metric.formatter(metric.google)} (${Math.round(googlePercent)}%)
+                            </div>
+                        </div>
+                        <div class="progress-legend">
+                            <div class="progress-legend-item">
+                                <div class="progress-legend-dot meta"></div>
+                                <span>Meta: ${metric.formatter(metric.meta)}</span>
+                            </div>
+                            <div class="progress-legend-item">
+                                <div class="progress-legend-dot google"></div>
+                                <span>Google: ${metric.formatter(metric.google)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('progressComparison').innerHTML = progressHTML;
+            
+            // All campaigns for card display
+            const allCampaigns = [
+                ...metaData.campaigns.map(c => ({ ...c, platform: 'Meta' })),
+                ...googleData.campaigns.map(c => ({ ...c, platform: 'Google' }))
+            ];
+            
+            // Top campaign cards
+            generateTopCampaignCards(allCampaigns, metrics);
+            
+            // Charts
+            createCampaignCharts();
+        }
+        
+        function createCampaignCharts() {
+            if (!metaData || !googleData) return;
+            
+            // Don't try to create charts if the canvas elements don't exist (tab not active)
+            if (!document.getElementById('campaignBubbleChart')) return;
+            
+            const metrics = calculateCampaignMetrics();
+            const allCampaigns = [
+                ...metaData.campaigns.map(c => ({ ...c, platform: 'Meta' })),
+                ...googleData.campaigns.map(c => ({ ...c, platform: 'Google' }))
+            ].sort((a, b) => (b.revenue / b.spend) - (a.revenue / a.spend));
+            
+            const isDark = document.body.classList.contains('dark-mode');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+            Chart.defaults.color = textColor;
+            
+            // Filter campaigns by platform
+            const metaCampaigns = allCampaigns.filter(c => c.platform === 'Meta');
+            const googleCampaigns = allCampaigns.filter(c => c.platform === 'Google');
+            
+            // Find max spend for bubble scaling
+            const maxSpend = Math.max(...allCampaigns.map(c => c.spend));
+            const minBubble = 8;
+            const maxBubble = 40;
+            
+            // Bubble Chart - Campaign Performance Map
+            if (campaignBubbleChart) campaignBubbleChart.destroy();
+            const bubbleCtx = document.getElementById('campaignBubbleChart').getContext('2d');
+            
+            // Create bubble data for each platform
+            const metaBubbles = metaCampaigns.map(c => ({
+                x: c.spend > 0 ? c.revenue / c.spend : 0,
+                y: c.revenue,
+                r: minBubble + ((c.spend / maxSpend) * (maxBubble - minBubble)),
+                name: c.name,
+                spend: c.spend,
+                roas: c.spend > 0 ? c.revenue / c.spend : 0,
+                profit: (c.revenue * metrics.margin) - c.spend
+            }));
+            
+            const googleBubbles = googleCampaigns.map(c => ({
+                x: c.spend > 0 ? c.revenue / c.spend : 0,
+                y: c.revenue,
+                r: minBubble + ((c.spend / maxSpend) * (maxBubble - minBubble)),
+                name: c.name,
+                spend: c.spend,
+                roas: c.spend > 0 ? c.revenue / c.spend : 0,
+                profit: (c.revenue * metrics.margin) - c.spend
+            }));
+            
+            campaignBubbleChart = new Chart(bubbleCtx, {
+                type: 'bubble',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Meta',
+                            data: metaBubbles,
+                            backgroundColor: metaBubbles.map(b => 
+                                b.roas >= metrics.breakevenRoas ? 'rgba(139, 92, 246, 0.6)' : 'rgba(239, 68, 68, 0.6)'
+                            ),
+                            borderColor: metaBubbles.map(b => 
+                                b.roas >= metrics.breakevenRoas ? 'rgba(16, 185, 129, 1)' : 'rgba(239, 68, 68, 1)'
+                            ),
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Google',
+                            data: googleBubbles,
+                            backgroundColor: googleBubbles.map(b => 
+                                b.roas >= metrics.breakevenRoas ? 'rgba(59, 130, 246, 0.6)' : 'rgba(239, 68, 68, 0.6)'
+                            ),
+                            borderColor: googleBubbles.map(b => 
+                                b.roas >= metrics.breakevenRoas ? 'rgba(16, 185, 129, 1)' : 'rgba(239, 68, 68, 1)'
+                            ),
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const data = context.raw;
+                                    const profitStr = data.profit >= 0 
+                                        ? `+$${data.profit.toLocaleString(undefined, {maximumFractionDigits: 0})}` 
+                                        : `-$${Math.abs(data.profit).toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+                                    return [
+                                        data.name,
+                                        `ROAS: ${data.roas.toFixed(2)}x`,
+                                        `Revenue: $${data.y.toLocaleString(undefined, {maximumFractionDigits: 0})}`,
+                                        `Spend: $${data.spend.toLocaleString(undefined, {maximumFractionDigits: 0})}`,
+                                        `Profit: ${profitStr}`
+                                    ];
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                breakeven: {
+                                    type: 'line',
+                                    xMin: metrics.breakevenRoas,
+                                    xMax: metrics.breakevenRoas,
+                                    borderColor: '#ef4444',
+                                    borderWidth: 2,
+                                    borderDash: [8, 4],
+                                    label: {
+                                        display: true,
+                                        content: 'Break-even',
+                                        position: 'start',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        padding: 6,
+                                        font: { size: 11, weight: '500' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'ROAS',
+                                font: { weight: '600' }
+                            },
+                            grid: { color: gridColor },
+                            ticks: { callback: value => value.toFixed(1) + 'x' },
+                            beginAtZero: true
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Revenue',
+                                font: { weight: '600' }
+                            },
+                            grid: { color: gridColor },
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'k' },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Profit by Campaign Chart
+            const campaignsWithProfit = allCampaigns.map(c => ({
+                name: c.name,
+                platform: c.platform,
+                profit: (c.revenue * metrics.margin) - c.spend
+            })).sort((a, b) => b.profit - a.profit);
+            
+            if (campaignProfitChart) campaignProfitChart.destroy();
+            const profitCtx = document.getElementById('campaignProfitChart').getContext('2d');
+            campaignProfitChart = new Chart(profitCtx, {
+                type: 'bar',
+                data: {
+                    labels: campaignsWithProfit.map(c => c.name.split(' ').slice(0, 4).join(' ')),
+                    datasets: [{
+                        label: 'Profit',
+                        data: campaignsWithProfit.map(c => c.profit),
+                        backgroundColor: campaignsWithProfit.map(c => 
+                            c.profit >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+                        ),
+                        borderColor: campaignsWithProfit.map(c => 
+                            c.profit >= 0 ? 'rgba(16, 185, 129, 1)' : 'rgba(239, 68, 68, 1)'
+                        ),
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const prefix = value >= 0 ? '+$' : '-$';
+                                    return `Profit: ${prefix}${Math.abs(value).toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: { 
+                                callback: function(value) {
+                                    const prefix = value >= 0 ? '$' : '-$';
+                                    return prefix + Math.abs(value / 1000).toFixed(1) + 'k';
+                                }
+                            }
+                        },
+                        y: { 
+                            grid: { display: false },
+                            ticks: {
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function generateTopCampaignCards(campaigns, metrics) {
+            const container = document.getElementById('topCampaignCards');
+            if (!container) return;
+            
+            console.log('Generating campaign table with', campaigns.length, 'campaigns');
+            console.log('Campaign names:', campaigns.map(c => c.name));
+            
+            // Sort campaigns by ROAS (best to worst)
+            const sortedByRoas = [...campaigns].sort((a, b) => {
+                const roasA = a.spend > 0 ? a.revenue / a.spend : 0;
+                const roasB = b.spend > 0 ? b.revenue / b.spend : 0;
+                return roasB - roasA;
+            });
+            
+            let html = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                        <thead>
+                            <tr style="background: #f9fafb;">
+                                <th style="padding: 12px 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb;">Campaign</th>
+                                <th style="padding: 12px 16px; text-align: center; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb;">Platform</th>
+                                <th style="padding: 12px 16px; text-align: right; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb;">Spend</th>
+                                <th style="padding: 12px 16px; text-align: right; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb;">Revenue</th>
+                                <th style="padding: 12px 16px; text-align: right; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb;">ROAS</th>
+                                <th style="padding: 12px 16px; text-align: right; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb;">Profit</th>
+                                <th style="padding: 12px 16px; text-align: left; font-weight: 600; font-size: 12px; color: #6b7280; text-transform: uppercase; border-bottom: 2px solid #e5e7eb;">Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            sortedByRoas.forEach(camp => {
+                const roas = camp.spend > 0 ? camp.revenue / camp.spend : 0;
+                const profit = (camp.revenue * metrics.margin) - camp.spend;
+                
+                // Determine performance level
+                let badge = '';
+                let badgeColor = '';
+                let progressWidth = 0;
+                let progressColor = '';
+                
+                if (roas >= metrics.breakevenRoas * 2) {
+                    badge = 'Excellent';
+                    badgeColor = '#10b981';
+                    progressWidth = 90;
+                    progressColor = '#10b981';
+                } else if (roas >= metrics.breakevenRoas * 1.5) {
+                    badge = 'Good';
+                    badgeColor = '#3b82f6';
+                    progressWidth = 65;
+                    progressColor = '#3b82f6';
+                } else if (roas >= metrics.breakevenRoas) {
+                    badge = 'Okay';
+                    badgeColor = '#f59e0b';
+                    progressWidth = 45;
+                    progressColor = '#f59e0b';
+                } else {
+                    badge = 'Poor';
+                    badgeColor = '#ef4444';
+                    progressWidth = 25;
+                    progressColor = '#ef4444';
+                }
+                
+                const platformBadgeStyle = camp.platform === 'Meta' 
+                    ? 'background: #dbeafe; color: #1e40af;' 
+                    : 'background: #dcfce7; color: #166534;';
+                
+                html += `
+                    <tr style="border-bottom: 1px solid #f3f4f6;">
+                        <td style="padding: 16px; font-weight: 600; color: #1a1d29;">${camp.name}</td>
+                        <td style="padding: 16px; text-align: center;">
+                            <span style="display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; ${platformBadgeStyle}">
+                                ${camp.platform}
+                            </span>
+                        </td>
+                        <td style="padding: 16px; text-align: right;">${formatCurrency(camp.spend)}</td>
+                        <td style="padding: 16px; text-align: right; font-weight: 600;">${formatCurrency(camp.revenue)}</td>
+                        <td style="padding: 16px; text-align: right; font-weight: 700; color: ${roas >= metrics.breakevenRoas ? '#10b981' : '#ef4444'};">${roas.toFixed(2)}x</td>
+                        <td style="padding: 16px; text-align: right; font-weight: 600; color: ${profit > 0 ? '#10b981' : '#ef4444'};">${formatCurrency(profit)}</td>
+                        <td style="padding: 16px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="flex: 1; width: 100%; height: 8px; background: #f3f4f6; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; background: ${progressColor}; border-radius: 4px; width: ${progressWidth}%;"></div>
+                                </div>
+                                <span style="font-size: 12px; font-weight: 600; color: ${badgeColor}; min-width: 70px;">${badge}</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // ==========================================
+        // REVENUE BREAKDOWN CODE
+        // ==========================================
+        
+        function updateRevenueDashboard() {
+            if (!businessData || businessData.length === 0) return;
+            
+            const currentMonth = businessData[businessData.length - 1];
+            
+            document.getElementById('revenuePageSubtitle').textContent = `Latest: ${currentMonth.month}`;
+            document.getElementById('revenueCurrentMonthTitle').textContent = `Current Month Performance (${currentMonth.month})`;
+            
+            // Calculate month-over-month changes
+            let adRevenueChange = 0, websiteSalesChange = 0, lucasSalesChange = 0, affiliateSalesChange = 0, cartRevenueChange = 0, trafficChange = 0;
+            
+            if (businessData.length > 1) {
+                const prevMonth = businessData[businessData.length - 2];
+                const totalBusinessChange = ((currentMonth.totalSales - prevMonth.totalSales) / prevMonth.totalSales * 100);
+                const adRevenueCurrent = currentMonth.googleRevenue + currentMonth.metaRevenue;
+                const adRevenuePrev = prevMonth.googleRevenue + prevMonth.metaRevenue;
+                adRevenueChange = adRevenuePrev > 0 ? ((adRevenueCurrent - adRevenuePrev) / adRevenuePrev * 100) : 0;
+                websiteSalesChange = prevMonth.websiteSales > 0 ? ((currentMonth.websiteSales - prevMonth.websiteSales) / prevMonth.websiteSales * 100) : 0;
+                lucasSalesChange = prevMonth.lucasSales > 0 ? ((currentMonth.lucasSales - prevMonth.lucasSales) / prevMonth.lucasSales * 100) : 0;
+                affiliateSalesChange = prevMonth.affiliateSales > 0 ? ((currentMonth.affiliateSales - prevMonth.affiliateSales) / prevMonth.affiliateSales * 100) : 0;
+                cartRevenueChange = prevMonth.recoveredCartRevenue > 0 ? ((currentMonth.recoveredCartRevenue - prevMonth.recoveredCartRevenue) / prevMonth.recoveredCartRevenue * 100) : 0;
+                trafficChange = prevMonth.traffic > 0 ? ((currentMonth.traffic - prevMonth.traffic) / prevMonth.traffic * 100) : 0;
+            }
+            
+            const totalAdRevenue = currentMonth.googleRevenue + currentMonth.metaRevenue;
+            
+            let metricsHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total Business Sales</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.totalSales)}</div>
+                    <div class="metric-subtext">All channels combined</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Revenue from Ads</div>
+                    <div class="metric-value">${formatCurrency(totalAdRevenue)}</div>
+                    <div class="metric-subtext">Meta + Google combined</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Website Sales</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.websiteSales)}</div>
+                    <div class="metric-subtext">Direct website purchases</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Lucas Sales</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.lucasSales)}</div>
+                    <div class="metric-subtext">Personal sales channel</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Affiliate Sales</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.affiliateSales)}</div>
+                    <div class="metric-subtext">Partner commissions</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Recovered Cart Revenue</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.recoveredCartRevenue)}</div>
+                    <div class="metric-subtext">From abandoned carts</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Website Traffic</div>
+                    <div class="metric-value">${currentMonth.traffic.toLocaleString()}</div>
+                    <div class="metric-subtext">Visitors this month</div>
+                </div>
+            `;
+            document.getElementById('revenueMetrics').innerHTML = metricsHTML;
+            
+            createRevenueCharts();
+        }
+        
+        function createRevenueCharts() {
+            if (!businessData || businessData.length === 0) return;
+            
+            // Don't try to create charts if the canvas elements don't exist (tab not active)
+            if (!document.getElementById('revenueChannelChart')) return;
+            
+            const months = businessData.map(d => d.month.split(' ')[0]); // Just month names
+            const adRevenue = businessData.map(d => d.googleRevenue + d.metaRevenue);
+            const websiteSales = businessData.map(d => d.websiteSales);
+            const lucasSales = businessData.map(d => d.lucasSales);
+            const affiliateSales = businessData.map(d => d.affiliateSales);
+            const recoveredCart = businessData.map(d => d.recoveredCartRevenue);
+            
+            const isDark = document.body.classList.contains('dark-mode');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+            Chart.defaults.color = textColor;
+            
+            // Chart 1: Revenue by Channel (Website, Lucas, Affiliate)
+            if (revenueChannelChart) revenueChannelChart.destroy();
+            const channelCtx = document.getElementById('revenueChannelChart').getContext('2d');
+            revenueChannelChart = new Chart(channelCtx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Website Sales',
+                            data: websiteSales,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        },
+                        {
+                            label: 'Lucas Sales',
+                            data: lucasSales,
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        },
+                        {
+                            label: 'Affiliate Sales',
+                            data: affiliateSales,
+                            backgroundColor: '#10b981',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                                },
+                                footer: function(tooltipItems) {
+                                    let sum = 0;
+                                    tooltipItems.forEach(function(tooltipItem) {
+                                        sum += tooltipItem.parsed.y;
+                                    });
+                                    return 'Total: ' + formatCurrency(sum);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: false,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            stacked: false,
+                            beginAtZero: true,
+                            grid: {
+                                color: gridColor
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Chart 2: Website Sales Attribution (Ad-Driven, Organic, Recovered Cart)
+            // Calculate organic sales: Website Sales - Revenue from Ads
+            const adDrivenSales = businessData.map(d => d.googleRevenue + d.metaRevenue);
+            const organicSales = businessData.map((d, i) => {
+                const organic = d.websiteSales - adDrivenSales[i];
+                return organic > 0 ? organic : 0;
+            });
+            
+            if (revenueAttributionChart) revenueAttributionChart.destroy();
+            const attributionCtx = document.getElementById('revenueAttributionChart').getContext('2d');
+            revenueAttributionChart = new Chart(attributionCtx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Ad-Driven Sales',
+                            data: adDrivenSales,
+                            backgroundColor: '#0095f6',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        },
+                        {
+                            label: 'Organic Sales',
+                            data: organicSales,
+                            backgroundColor: '#6b7280',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.chart.data.datasets.reduce((sum, ds) => {
+                                        return sum + ds.data[context.dataIndex];
+                                    }, 0);
+                                    const percent = ((context.parsed.y / total) * 100).toFixed(1);
+                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y) + ' (' + percent + '%)';
+                                },
+                                footer: function(tooltipItems) {
+                                    let sum = 0;
+                                    tooltipItems.forEach(function(tooltipItem) {
+                                        sum += tooltipItem.parsed.y;
+                                    });
+                                    return 'Total Website Sales: ' + formatCurrency(sum);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: {
+                                color: gridColor
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Line Chart
+            if (revenueLineChart) revenueLineChart.destroy();
+            const lineCtx = document.getElementById('revenueLineChart').getContext('2d');
+            revenueLineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Revenue from Ads',
+                            data: adRevenue,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Website Sales',
+                            data: websiteSales,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Lucas Sales',
+                            data: lucasSales,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Affiliate Sales',
+                            data: affiliateSales,
+                            borderColor: '#ec4899',
+                            backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Recovered Cart',
+                            data: recoveredCart,
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 15
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: gridColor
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'k';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // ==========================================
+        // BUSINESS OVERVIEW CODE
+        // ==========================================
+        
+        function handleBusinessUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('businessFileName').textContent = file.name;
+                Papa.parse(file, {
+                    header: true,
+                    complete: function(results) {
+                        businessData = parseBusinessData(results.data);
+                        if (businessData.length === 0) {
+                            alert('No valid data found in CSV. Please check your file format.');
+                            return;
+                        }
+                        // Hide upload section and show dashboard
+                        document.getElementById('businessUploadSection').style.display = 'none';
+                        updateBusinessDashboard();
+                    },
+                    error: function(error) {
+                        alert('Error parsing CSV: ' + error.message);
+                    }
+                });
+            }
+        }
+        
+        function parseBusinessData(data) {
+            const months = [];
+            
+            data.forEach(row => {
+                if (row['Month'] && row['Month'].trim() !== '' && row['Month'].trim() !== ',') {
+                    const hasData = row['Google Spend'] || row['Google Revenue'] || 
+                                   row['Meta Spend'] || row['Meta Revenue'] || 
+                                   row['Website Sales'] || row['Total Business Sales'];
+                    
+                    if (hasData) {
+                        // Handle both "Jan 2025" and "2025-01-25" date formats
+                        let monthStr = row['Month'].trim();
+                        if (monthStr.includes('-')) {
+                            // Convert "2025-01-25" to "Jan 2025"
+                            const date = new Date(monthStr);
+                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            monthStr = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+                        }
+                        
+                        months.push({
+                            month: monthStr,
+                            days: parseInt(row['Days']) || 30,
+                            googleSpend: parseFloat(row['Google Spend']) || 0,
+                            googleRevenue: parseFloat(row['Google Revenue']) || 0,
+                            metaSpend: parseFloat(row['Meta Spend']) || 0,
+                            metaRevenue: parseFloat(row['Meta Revenue']) || 0,
+                            websiteSales: parseFloat(row['Website Sales']) || 0,
+                            lucasSales: parseFloat(row['Lucas Sales']) || 0,
+                            affiliateSales: parseFloat(row['Affiliate Sales']) || 0,
+                            totalSales: parseFloat(row['Total Business Sales']) || 0,
+                            traffic: parseFloat(row['Website Traffic']) || 0,
+                            recoveredCartRevenue: parseFloat(row['Recovered Cart Revenue']) || 0
+                        });
+                    }
+                }
+            });
+            
+            return months;
+        }
+        
+        function updateBusinessDashboard() {
+            if (!businessData || businessData.length === 0) return;
+            
+            const margin = parseFloat(document.getElementById('businessMargin').value);
+            const currentMonth = businessData[businessData.length - 1];
+            
+            console.log('Current month data:', currentMonth);
+            console.log('Month string:', currentMonth.month);
+            
+            document.getElementById('businessDashboardContent').classList.add('active');
+            document.getElementById('businessPageSubtitle').textContent = `Latest: ${currentMonth.month} • ${(margin * 100)}% profit margin`;
+            document.getElementById('currentMonthTitle').textContent = `Current Month Performance (${currentMonth.month})`;
+            
+            const totalAdSpend = currentMonth.googleSpend + currentMonth.metaSpend;
+            const totalAdRevenue = currentMonth.googleRevenue + currentMonth.metaRevenue;
+            const adGrossProfit = totalAdRevenue * margin;
+            const adNetProfit = adGrossProfit - totalAdSpend;
+            const adROAS = totalAdSpend > 0 ? totalAdRevenue / totalAdSpend : 0;
+            const adROI = totalAdSpend > 0 ? (adNetProfit / totalAdSpend) * 100 : 0;
+            
+            // Use days from CSV data
+            const daysInMonth = currentMonth.days || 30;
+            
+            // Calculate additional metrics
+            const totalGrossProfit = currentMonth.totalSales * margin;
+            const revenuePerVisitor = currentMonth.traffic > 0 ? currentMonth.websiteSales / currentMonth.traffic : 0;
+            const breakevenRoasCard = 1 / margin;
+            const roasVsBreakeven = adROAS - breakevenRoasCard;
+            
+            // Current month cards
+            let metricsHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total Business Sales</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.totalSales)}</div>
+                    <div class="metric-subtext">${formatCurrency(currentMonth.totalSales / daysInMonth)}/day avg</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Gross Profit</div>
+                    <div class="metric-value">${formatCurrency(totalGrossProfit)}</div>
+                    <div class="metric-subtext">All channels at ${(margin * 100).toFixed(0)}% margin</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Ad Net Profit</div>
+                    <div class="metric-value ${adNetProfit >= 0 ? 'positive' : 'negative'}">${formatCurrency(adNetProfit)}</div>
+                    <div class="metric-subtext">${adROI.toFixed(0)}% ROI on ad spend</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Blended ROAS</div>
+                    <div class="metric-value ${adROAS >= breakevenRoasCard ? 'positive' : 'negative'}">${adROAS.toFixed(2)}x</div>
+                    <div class="metric-subtext">${roasVsBreakeven >= 0 ? '+' : ''}${roasVsBreakeven.toFixed(2)}x vs ${breakevenRoasCard.toFixed(1)}x break-even</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Revenue per Visitor</div>
+                    <div class="metric-value">$${revenuePerVisitor.toFixed(2)}</div>
+                    <div class="metric-subtext">${currentMonth.traffic.toLocaleString()} visitors → ${formatCurrency(currentMonth.websiteSales)}</div>
+                </div>
+            `;
+            document.getElementById('businessMetrics').innerHTML = metricsHTML;
+            
+            // Google Ads stats
+            const googleGrossProfit = currentMonth.googleRevenue * margin;
+            const googleNetProfit = googleGrossProfit - currentMonth.googleSpend;
+            const googleROAS = currentMonth.googleSpend > 0 ? currentMonth.googleRevenue / currentMonth.googleSpend : 0;
+            const googleROI = currentMonth.googleSpend > 0 ? (googleNetProfit / currentMonth.googleSpend) * 100 : 0;
+            
+            // Meta Ads stats
+            const metaGrossProfit = currentMonth.metaRevenue * margin;
+            const metaNetProfit = metaGrossProfit - currentMonth.metaSpend;
+            const metaROAS = currentMonth.metaSpend > 0 ? currentMonth.metaRevenue / currentMonth.metaSpend : 0;
+            const metaROI = currentMonth.metaSpend > 0 ? (metaNetProfit / currentMonth.metaSpend) * 100 : 0;
+            
+            // Combined stats
+            const breakevenRoas = 1 / margin;
+            
+            // Build comparison table
+            const isDark = document.body.classList.contains('dark-mode');
+            const headerBg = isDark ? '#374151' : '#f9fafb';
+            const borderColor = isDark ? '#4b5563' : '#e5e7eb';
+            
+            document.getElementById('adComparisonTable').innerHTML = `
+                <thead>
+                    <tr style="background: ${headerBg};">
+                        <th style="padding: 14px 16px; text-align: left; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid ${borderColor};">Metric</th>
+                        <th style="padding: 14px 16px; text-align: right; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid ${borderColor};">Google</th>
+                        <th style="padding: 14px 16px; text-align: right; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid ${borderColor};">Meta</th>
+                        <th style="padding: 14px 16px; text-align: right; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid ${borderColor};">Combined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; font-weight: 500;">Spend</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right;">${formatCurrency(currentMonth.googleSpend)}</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right;">${formatCurrency(currentMonth.metaSpend)}</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; font-weight: 600;">${formatCurrency(totalAdSpend)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; font-weight: 500;">Revenue</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right;">${formatCurrency(currentMonth.googleRevenue)}</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right;">${formatCurrency(currentMonth.metaRevenue)}</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; font-weight: 600;">${formatCurrency(totalAdRevenue)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; font-weight: 500;">Net Profit</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; color: ${googleNetProfit >= 0 ? '#10b981' : '#ef4444'};">${formatCurrency(googleNetProfit)}</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; color: ${metaNetProfit >= 0 ? '#10b981' : '#ef4444'};">${formatCurrency(metaNetProfit)}</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; font-weight: 600; color: ${adNetProfit >= 0 ? '#10b981' : '#ef4444'};">${formatCurrency(adNetProfit)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; font-weight: 500;">ROAS</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; color: ${googleROAS >= breakevenRoas ? '#10b981' : '#ef4444'};">${googleROAS.toFixed(2)}x</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; color: ${metaROAS >= breakevenRoas ? '#10b981' : '#ef4444'};">${metaROAS.toFixed(2)}x</td>
+                        <td style="padding: 12px 16px; border-bottom: 1px solid ${borderColor}; text-align: right; font-weight: 600; color: ${adROAS >= breakevenRoas ? '#10b981' : '#ef4444'};">${adROAS.toFixed(2)}x</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px 16px; font-weight: 500;">ROI</td>
+                        <td style="padding: 12px 16px; text-align: right; color: ${googleROI >= 0 ? '#10b981' : '#ef4444'};">${googleROI.toFixed(0)}%</td>
+                        <td style="padding: 12px 16px; text-align: right; color: ${metaROI >= 0 ? '#10b981' : '#ef4444'};">${metaROI.toFixed(0)}%</td>
+                        <td style="padding: 12px 16px; text-align: right; font-weight: 600; color: ${adROI >= 0 ? '#10b981' : '#ef4444'};">${adROI.toFixed(0)}%</td>
+                    </tr>
+                </tbody>
+            `;
+            
+            document.getElementById('breakevenNote').textContent = `Break-even ROAS at ${(margin * 100).toFixed(0)}% margin = ${breakevenRoas.toFixed(2)}x · Green = profitable, Red = below break-even`;
+            
+            // Sales stats
+            document.getElementById('websiteStats').innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">Total Sales</span>
+                    <span class="stat-value">${formatCurrency(currentMonth.websiteSales)}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Daily Average</span>
+                    <span class="stat-value">${formatCurrency(currentMonth.websiteSales / daysInMonth)}</span>
+                </div>
+            `;
+            
+            document.getElementById('lucasStats').innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">Total Sales</span>
+                    <span class="stat-value">${formatCurrency(currentMonth.lucasSales)}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Daily Average</span>
+                    <span class="stat-value">${formatCurrency(currentMonth.lucasSales / daysInMonth)}</span>
+                </div>
+            `;
+            
+            document.getElementById('affiliateStats').innerHTML = `
+                <div class="stat-row">
+                    <span class="stat-label">Total Sales</span>
+                    <span class="stat-value">${formatCurrency(currentMonth.affiliateSales)}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Daily Average</span>
+                    <span class="stat-value">${formatCurrency(currentMonth.affiliateSales / daysInMonth)}</span>
+                </div>
+            `;
+            
+            createBusinessCharts();
+        }
+        
+        function createBusinessCharts() {
+            if (!businessData) return;
+            
+            // Don't try to create charts if the canvas elements don't exist (tab not active)
+            if (!document.getElementById('revenueChart')) return;
+            
+            const months = businessData.map(d => d.month);
+            const margin = parseFloat(document.getElementById('businessMargin').value);
+            const isDark = document.body.classList.contains('dark-mode');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+            Chart.defaults.color = textColor;
+            
+            // Revenue trends chart
+            if (revenueChart) revenueChart.destroy();
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Total Business',
+                            data: businessData.map(d => d.totalSales),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Website Sales',
+                            data: businessData.map(d => d.websiteSales),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Lucas Sales',
+                            data: businessData.map(d => d.lucasSales),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Affiliate Sales',
+                            data: businessData.map(d => d.affiliateSales),
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: context => context.dataset.label + ': $' + context.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: {
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'k'
+                            }
+                        },
+                        x: { grid: { color: gridColor } }
+                    }
+                }
+            });
+            
+            // Ad spend & revenue chart (combo bar + line)
+            if (adChart) adChart.destroy();
+            const adCtx = document.getElementById('adChart').getContext('2d');
+            const breakevenRoas = 1 / margin;
+            
+            adChart = new Chart(adCtx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Revenue from Ads',
+                            data: businessData.map(d => d.googleRevenue + d.metaRevenue),
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 2
+                        },
+                        {
+                            type: 'bar',
+                            label: 'Ad Spend',
+                            data: businessData.map(d => d.googleSpend + d.metaSpend),
+                            backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                            borderColor: 'rgba(249, 115, 22, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 3
+                        },
+                        {
+                            type: 'line',
+                            label: 'ROAS',
+                            data: businessData.map(d => {
+                                const totalSpend = d.googleSpend + d.metaSpend;
+                                const totalRevenue = d.googleRevenue + d.metaRevenue;
+                                return totalSpend > 0 ? totalRevenue / totalSpend : 0;
+                            }),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: false,
+                            yAxisID: 'y1',
+                            pointRadius: 5,
+                            pointBackgroundColor: '#3b82f6',
+                            order: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: context => {
+                                    if (context.dataset.label === 'ROAS') {
+                                        return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + 'x';
+                                    }
+                                    return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                breakeven: {
+                                    type: 'line',
+                                    yMin: breakevenRoas,
+                                    yMax: breakevenRoas,
+                                    yScaleID: 'y1',
+                                    borderColor: '#ef4444',
+                                    borderWidth: 2,
+                                    borderDash: [8, 4],
+                                    label: {
+                                        display: true,
+                                        content: 'Break-even (' + breakevenRoas.toFixed(1) + 'x)',
+                                        position: 'end',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        padding: 8,
+                                        font: { size: 12, weight: '500' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Revenue / Spend ($)',
+                                font: { size: 12, weight: '500' }
+                            },
+                            grid: { color: gridColor },
+                            ticks: {
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'k'
+                            }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'ROAS (x)',
+                                font: { size: 12, weight: '500' }
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                callback: value => value.toFixed(1) + 'x'
+                            }
+                        },
+                        x: { grid: { color: gridColor } }
+                    }
+                }
+            });
+            
+            // Traffic chart
+            if (trafficChart) trafficChart.destroy();
+            const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+            trafficChart = new Chart(trafficCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Website Visitors',
+                        data: businessData.map(d => d.traffic),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => 'Visitors: ' + context.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: {
+                                callback: value => (value / 1000).toFixed(0) + 'k'
+                            }
+                        },
+                        x: { grid: { color: gridColor } }
+                    }
+                }
+            });
+        }
+        
+        // ==========================================
+        // MONTHLY TRENDS CODE
+        // ==========================================
+        
+        function updateTrendsDashboard() {
+            if (!businessData || businessData.length < 2) {
+                document.getElementById('trendsMetrics').innerHTML = '<p style="color: #6b7280;">Need at least 2 months of data to show trends.</p>';
+                return;
+            }
+            
+            const margin = parseFloat(document.getElementById('businessMargin').value);
+            const currentMonth = businessData[businessData.length - 1];
+            const lastMonth = businessData[businessData.length - 2];
+            
+            // Calculate changes
+            const revenueChange = ((currentMonth.totalSales - lastMonth.totalSales) / lastMonth.totalSales) * 100;
+            const trafficChange = ((currentMonth.traffic - lastMonth.traffic) / lastMonth.traffic) * 100;
+            
+            const currentAdSpend = currentMonth.googleSpend + currentMonth.metaSpend;
+            const lastAdSpend = lastMonth.googleSpend + lastMonth.metaSpend;
+            const currentAdRevenue = currentMonth.googleRevenue + currentMonth.metaRevenue;
+            const lastAdRevenue = lastMonth.googleRevenue + lastMonth.metaRevenue;
+            
+            const currentRoas = currentAdSpend > 0 ? currentAdRevenue / currentAdSpend : 0;
+            const lastRoas = lastAdSpend > 0 ? lastAdRevenue / lastAdSpend : 0;
+            const roasChange = lastRoas > 0 ? ((currentRoas - lastRoas) / lastRoas) * 100 : 0;
+            
+            const adSpendChange = lastAdSpend > 0 ? ((currentAdSpend - lastAdSpend) / lastAdSpend) * 100 : 0;
+            const adRevenueChange = lastAdRevenue > 0 ? ((currentAdRevenue - lastAdRevenue) / lastAdRevenue) * 100 : 0;
+            
+            const websiteSalesChange = lastMonth.websiteSales > 0 ? ((currentMonth.websiteSales - lastMonth.websiteSales) / lastMonth.websiteSales) * 100 : 0;
+            
+            document.getElementById('trendsPageSubtitle').textContent = `Comparing ${currentMonth.month} to ${lastMonth.month}`;
+            
+            function formatChange(value) {
+                const arrow = value >= 0 ? '↑' : '↓';
+                const color = value >= 0 ? '#10b981' : '#ef4444';
+                return `<span style="color: ${color}; font-weight: 600;">${arrow} ${Math.abs(value).toFixed(1)}%</span>`;
+            }
+            
+            let metricsHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total Revenue</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.totalSales)}</div>
+                    <div class="metric-subtext">${formatChange(revenueChange)} vs last month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Ad ROAS</div>
+                    <div class="metric-value">${currentRoas.toFixed(2)}x</div>
+                    <div class="metric-subtext">${formatChange(roasChange)} vs last month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Ad Spend</div>
+                    <div class="metric-value">${formatCurrency(currentAdSpend)}</div>
+                    <div class="metric-subtext">${formatChange(adSpendChange)} vs last month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Revenue from Ads</div>
+                    <div class="metric-value">${formatCurrency(currentAdRevenue)}</div>
+                    <div class="metric-subtext">${formatChange(adRevenueChange)} vs last month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Website Traffic</div>
+                    <div class="metric-value">${currentMonth.traffic.toLocaleString()}</div>
+                    <div class="metric-subtext">${formatChange(trafficChange)} vs last month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Website Sales</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.websiteSales)}</div>
+                    <div class="metric-subtext">${formatChange(websiteSalesChange)} vs last month</div>
+                </div>
+            `;
+            document.getElementById('trendsMetrics').innerHTML = metricsHTML;
+            
+            // Build summary table
+            let tableHTML = `
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Total Revenue</th>
+                        <th>Ad Spend</th>
+                        <th>Revenue from Ads</th>
+                        <th>ROAS</th>
+                        <th>Traffic</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            businessData.forEach((month, index) => {
+                const adSpend = month.googleSpend + month.metaSpend;
+                const adRevenue = month.googleRevenue + month.metaRevenue;
+                const roas = adSpend > 0 ? adRevenue / adSpend : 0;
+                
+                tableHTML += `
+                    <tr>
+                        <td>${month.month}</td>
+                        <td>${formatCurrency(month.totalSales)}</td>
+                        <td>${formatCurrency(adSpend)}</td>
+                        <td>${formatCurrency(adRevenue)}</td>
+                        <td>${roas.toFixed(2)}x</td>
+                        <td>${month.traffic.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += '</tbody>';
+            document.getElementById('trendsSummaryTable').innerHTML = tableHTML;
+            
+            createTrendsCharts();
+        }
+        
+        function createTrendsCharts() {
+            if (!businessData) return;
+            
+            // Don't try to create charts if the canvas elements don't exist (tab not active)
+            if (!document.getElementById('revenueTrendChart')) return;
+            
+            const months = businessData.map(d => d.month);
+            const margin = parseFloat(document.getElementById('businessMargin').value);
+            const isDark = document.body.classList.contains('dark-mode');
+            const gridColor = isDark ? '#374151' : '#f3f4f6';
+            const textColor = isDark ? '#9ca3af' : '#6b7280';
+            
+            Chart.defaults.font.family = "'Outfit', sans-serif";
+            Chart.defaults.color = textColor;
+            
+            // Revenue Trend Chart
+            if (revenueTrendChart) revenueTrendChart.destroy();
+            const revenueCtx = document.getElementById('revenueTrendChart').getContext('2d');
+            revenueTrendChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        {
+                            label: 'Total Business Revenue',
+                            data: businessData.map(d => d.totalSales),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Revenue from Ads',
+                            data: businessData.map(d => d.googleRevenue + d.metaRevenue),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: context => context.dataset.label + ': $' + context.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: {
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'k'
+                            }
+                        },
+                        x: { grid: { color: gridColor } }
+                    }
+                }
+            });
+            
+            // ROAS Trend Chart
+            if (roasTrendChart) roasTrendChart.destroy();
+            const roasCtx = document.getElementById('roasTrendChart').getContext('2d');
+            const breakevenRoas = 1 / margin;
+            roasTrendChart = new Chart(roasCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Blended ROAS',
+                        data: businessData.map(d => {
+                            const spend = d.googleSpend + d.metaSpend;
+                            const revenue = d.googleRevenue + d.metaRevenue;
+                            return spend > 0 ? revenue / spend : 0;
+                        }),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                breakeven: {
+                                    type: 'line',
+                                    yMin: breakevenRoas,
+                                    yMax: breakevenRoas,
+                                    borderColor: '#ef4444',
+                                    borderWidth: 2,
+                                    borderDash: [8, 4],
+                                    label: {
+                                        display: true,
+                                        content: 'Break-even (' + breakevenRoas.toFixed(1) + 'x)',
+                                        position: 'end',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        padding: 8,
+                                        font: { size: 12, weight: '500' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: {
+                                callback: value => value.toFixed(1) + 'x'
+                            }
+                        },
+                        x: { grid: { color: gridColor } }
+                    }
+                }
+            });
+            
+            // Traffic Trend Chart
+            if (trafficTrendChart) trafficTrendChart.destroy();
+            const trafficCtx = document.getElementById('trafficTrendChart').getContext('2d');
+            const avgTraffic = businessData.reduce((sum, d) => sum + d.traffic, 0) / businessData.length;
+            trafficTrendChart = new Chart(trafficCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Website Visitors',
+                        data: businessData.map(d => d.traffic),
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => 'Visitors: ' + context.parsed.y.toLocaleString()
+                            }
+                        },
+                        annotation: {
+                            annotations: {
+                                average: {
+                                    type: 'line',
+                                    yMin: avgTraffic,
+                                    yMax: avgTraffic,
+                                    borderColor: '#6b7280',
+                                    borderWidth: 2,
+                                    borderDash: [8, 4],
+                                    label: {
+                                        display: true,
+                                        content: 'Avg: ' + Math.round(avgTraffic).toLocaleString(),
+                                        position: 'end',
+                                        backgroundColor: '#6b7280',
+                                        color: 'white',
+                                        padding: 8,
+                                        font: { size: 12, weight: '500' }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: {
+                                callback: value => (value / 1000).toFixed(0) + 'k'
+                            }
+                        },
+                        x: { grid: { color: gridColor } }
+                    }
+                }
+            });
+        }
+        
+        // ==========================================
+        // EXECUTIVE SUMMARY CODE
+        // ==========================================
+        
+        function updateSummaryDashboard() {
+            if (!businessData || businessData.length === 0) {
+                document.getElementById('summaryMetrics').innerHTML = '<p style="color: #6b7280;">No business data available.</p>';
+                return;
+            }
+            
+            const margin = parseFloat(document.getElementById('businessMargin').value);
+            const breakevenRoas = 1 / margin;
+            const currentMonth = businessData[businessData.length - 1];
+            const lastMonth = businessData.length >= 2 ? businessData[businessData.length - 2] : null;
+            
+            // Current month calculations
+            const currentAdSpend = currentMonth.googleSpend + currentMonth.metaSpend;
+            const currentAdRevenue = currentMonth.googleRevenue + currentMonth.metaRevenue;
+            const currentRoas = currentAdSpend > 0 ? currentAdRevenue / currentAdSpend : 0;
+            const currentNetProfit = (currentAdRevenue * margin) - currentAdSpend;
+            
+            // Last month calculations for comparison
+            let revenueChange = 0;
+            let roasChange = 0;
+            let trafficChange = 0;
+            let adSpendChange = 0;
+            
+            if (lastMonth) {
+                const lastAdSpend = lastMonth.googleSpend + lastMonth.metaSpend;
+                const lastAdRevenue = lastMonth.googleRevenue + lastMonth.metaRevenue;
+                const lastRoas = lastAdSpend > 0 ? lastAdRevenue / lastAdSpend : 0;
+                
+                revenueChange = lastMonth.totalSales > 0 ? ((currentMonth.totalSales - lastMonth.totalSales) / lastMonth.totalSales) * 100 : 0;
+                roasChange = lastRoas > 0 ? ((currentRoas - lastRoas) / lastRoas) * 100 : 0;
+                trafficChange = lastMonth.traffic > 0 ? ((currentMonth.traffic - lastMonth.traffic) / lastMonth.traffic) * 100 : 0;
+                adSpendChange = lastAdSpend > 0 ? ((currentAdSpend - lastAdSpend) / lastAdSpend) * 100 : 0;
+            }
+            
+            // Use days from CSV, calculate total days in month from month name
+            let daysElapsed = currentMonth.days || 30;
+            let totalDaysInMonth = 31;
+            let monthName = currentMonth.month;
+            
+            try {
+                const monthYear = currentMonth.month.split(' ');
+                const monthMap = {
+                    'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+                    'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+                };
+                const monthIndex = monthMap[monthYear[0]];
+                const year = parseInt(monthYear[1]);
+                
+                if (monthIndex !== undefined && !isNaN(year)) {
+                    totalDaysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+                }
+            } catch (e) {
+                console.error('Error calculating days:', e);
+            }
+            
+            // Projections
+            const dailyRevenue = currentMonth.totalSales / daysElapsed;
+            const projectedRevenue = dailyRevenue * totalDaysInMonth;
+            const projectedAdRevenue = (currentAdRevenue / daysElapsed) * totalDaysInMonth;
+            const projectedAdSpend = (currentAdSpend / daysElapsed) * totalDaysInMonth;
+            const projectedNetProfit = (projectedAdRevenue * margin) - projectedAdSpend;
+            
+            document.getElementById('summaryPageSubtitle').textContent = `${monthName} • Day ${daysElapsed} of ${totalDaysInMonth}`;
+            
+            // Helper for status indicators
+            function getStatusBadge(value, isGood) {
+                if (isGood) {
+                    return `<span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">↑ ${Math.abs(value).toFixed(1)}%</span>`;
+                } else {
+                    return `<span style="background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">↓ ${Math.abs(value).toFixed(1)}%</span>`;
+                }
+            }
+            
+            function getRoasStatus(roas, breakeven) {
+                if (roas >= breakeven * 1.5) {
+                    return `<span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Excellent</span>`;
+                } else if (roas >= breakeven) {
+                    return `<span style="background: #fef9c3; color: #854d0e; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Good</span>`;
+                } else {
+                    return `<span style="background: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">Below Target</span>`;
+                }
+            }
+            
+            let metricsHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Total Revenue</div>
+                    <div class="metric-value">${formatCurrency(currentMonth.totalSales)}</div>
+                    <div class="metric-subtext">${lastMonth ? getStatusBadge(revenueChange, revenueChange >= 0) + ' vs last month' : 'Current month'}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Ad ROAS</div>
+                    <div class="metric-value">${currentRoas.toFixed(2)}x</div>
+                    <div class="metric-subtext">${getRoasStatus(currentRoas, breakevenRoas)} ${lastMonth ? getStatusBadge(roasChange, roasChange >= 0) + ' vs last month' : ''}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Ad Net Profit</div>
+                    <div class="metric-value ${currentNetProfit >= 0 ? 'positive' : ''}">${formatCurrency(currentNetProfit)}</div>
+                    <div class="metric-subtext">At ${(margin * 100).toFixed(0)}% margin</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Website Traffic</div>
+                    <div class="metric-value">${currentMonth.traffic.toLocaleString()}</div>
+                    <div class="metric-subtext">${lastMonth ? getStatusBadge(trafficChange, trafficChange >= 0) + ' vs last month' : 'Current month'}</div>
+                </div>
+            `;
+            document.getElementById('summaryMetrics').innerHTML = metricsHTML;
+            
+            // Forecast summary
+            let forecastHTML = `
+                <div class="metric-card">
+                    <div class="metric-label">Projected Revenue</div>
+                    <div class="metric-value">${formatCurrency(projectedRevenue)}</div>
+                    <div class="metric-subtext">Based on ${daysElapsed}-day avg</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Projected Ad Profit</div>
+                    <div class="metric-value ${projectedNetProfit >= 0 ? 'positive' : ''}">${formatCurrency(projectedNetProfit)}</div>
+                    <div class="metric-subtext">End of month estimate</div>
+                </div>
+            `;
+            document.getElementById('summaryForecast').innerHTML = forecastHTML;
+            
+            // Create sparkline cards
+            createSparklineCards(businessData, margin, breakevenRoas);
+        }
+        
+        function createSparklineCards(data, margin, breakevenRoas) {
+            if (!data || data.length === 0) return;
+            
+            const current = data[data.length - 1];
+            const previous = data.length > 1 ? data[data.length - 2] : null;
+            
+            // Calculate current values
+            const totalAdSpend = current.googleSpend + current.metaSpend;
+            const totalAdRevenue = current.googleRevenue + current.metaRevenue;
+            const blendedRoas = totalAdSpend > 0 ? totalAdRevenue / totalAdSpend : 0;
+            const adNetProfit = (totalAdRevenue * margin) - totalAdSpend;
+            const adSpendPercent = current.totalSales > 0 ? (totalAdSpend / current.totalSales) * 100 : 0;
+            const revenuePerVisitor = current.traffic > 0 ? current.totalSales / current.traffic : 0;
+            
+            // Calculate changes vs previous month
+            let salesChange = 0, trafficChange = 0, roasChange = 0;
+            if (previous) {
+                salesChange = previous.totalSales > 0 ? ((current.totalSales - previous.totalSales) / previous.totalSales) * 100 : 0;
+                trafficChange = previous.traffic > 0 ? ((current.traffic - previous.traffic) / previous.traffic) * 100 : 0;
+                const prevAdSpend = previous.googleSpend + previous.metaSpend;
+                const prevAdRevenue = previous.googleRevenue + previous.metaRevenue;
+                const prevRoas = prevAdSpend > 0 ? prevAdRevenue / prevAdSpend : 0;
+                roasChange = prevRoas > 0 ? ((blendedRoas - prevRoas) / prevRoas) * 100 : 0;
+            }
+            
+            // Generate sparkline paths from historical data
+            function generateSparklinePath(dataPoints, maxVal) {
+                if (dataPoints.length < 2) return { line: '', area: '' };
+                const max = maxVal || Math.max(...dataPoints);
+                const min = Math.min(...dataPoints);
+                const range = max - min || 1;
+                
+                const points = dataPoints.map((val, i) => {
+                    const x = (i / (dataPoints.length - 1)) * 100;
+                    const y = 50 - ((val - min) / range) * 40;
+                    return { x, y };
+                });
+                
+                const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+                const areaPath = linePath + ` L100,50 L0,50 Z`;
+                
+                return { line: linePath, area: areaPath };
+            }
+            
+            // Get historical data for sparklines (last 6 months or all available)
+            const recentData = data.slice(-6);
+            const salesHistory = recentData.map(d => d.totalSales);
+            const trafficHistory = recentData.map(d => d.traffic);
+            const roasHistory = recentData.map(d => {
+                const spend = d.googleSpend + d.metaSpend;
+                const rev = d.googleRevenue + d.metaRevenue;
+                return spend > 0 ? rev / spend : 0;
+            });
+            const profitHistory = recentData.map(d => {
+                const spend = d.googleSpend + d.metaSpend;
+                const rev = d.googleRevenue + d.metaRevenue;
+                return (rev * margin) - spend;
+            });
+            const adSpendHistory = recentData.map(d => {
+                const spend = d.googleSpend + d.metaSpend;
+                return d.totalSales > 0 ? (spend / d.totalSales) * 100 : 0;
+            });
+            const rpvHistory = recentData.map(d => d.traffic > 0 ? d.totalSales / d.traffic : 0);
+            
+            const salesPath = generateSparklinePath(salesHistory);
+            const trafficPath = generateSparklinePath(trafficHistory);
+            const roasPath = generateSparklinePath(roasHistory);
+            const profitPath = generateSparklinePath(profitHistory);
+            const adSpendPath = generateSparklinePath(adSpendHistory);
+            const rpvPath = generateSparklinePath(rpvHistory);
+            
+            // Determine status classes
+            const roasStatus = blendedRoas >= breakevenRoas ? 'up' : 'down';
+            const profitStatus = adNetProfit >= 0 ? 'up' : 'down';
+            const salesStatus = salesChange >= 0 ? 'up' : 'down';
+            const trafficStatus = trafficChange >= 0 ? 'up' : 'down';
+            
+            const cards = [
+                {
+                    label: 'Total Sales',
+                    value: '$' + current.totalSales.toLocaleString(),
+                    change: (salesChange >= 0 ? '↑' : '↓') + ' ' + Math.abs(salesChange).toFixed(0) + '% vs last month',
+                    changeClass: salesStatus,
+                    color: 'blue',
+                    path: salesPath
+                },
+                {
+                    label: 'Blended ROAS',
+                    value: blendedRoas.toFixed(2) + 'x',
+                    change: blendedRoas >= breakevenRoas ? '↑ Above ' + breakevenRoas.toFixed(2) + 'x target' : '↓ Below ' + breakevenRoas.toFixed(2) + 'x target',
+                    changeClass: roasStatus,
+                    color: roasStatus === 'up' ? 'green' : 'red',
+                    path: roasPath
+                },
+                {
+                    label: 'Ad Net Profit',
+                    value: '$' + adNetProfit.toLocaleString(undefined, {maximumFractionDigits: 0}),
+                    change: adNetProfit >= 0 ? '↑ Profitable' : '↓ Losing money',
+                    changeClass: profitStatus,
+                    color: profitStatus === 'up' ? 'green' : 'red',
+                    path: profitPath
+                },
+                {
+                    label: 'Website Traffic',
+                    value: current.traffic.toLocaleString(),
+                    change: (trafficChange >= 0 ? '↑' : '↓') + ' ' + Math.abs(trafficChange).toFixed(0) + '% vs last month',
+                    changeClass: trafficStatus,
+                    color: 'purple',
+                    path: trafficPath
+                },
+                {
+                    label: 'Ad Spend %',
+                    value: adSpendPercent.toFixed(1) + '%',
+                    change: adSpendPercent <= 15 ? '↑ Efficient' : '↓ High spend ratio',
+                    changeClass: adSpendPercent <= 15 ? 'up' : 'down',
+                    color: 'amber',
+                    path: adSpendPath
+                },
+                {
+                    label: 'Revenue/Visitor',
+                    value: '$' + revenuePerVisitor.toFixed(2),
+                    change: revenuePerVisitor >= 10 ? '↑ Strong conversion' : 'Room to improve',
+                    changeClass: revenuePerVisitor >= 10 ? 'up' : 'neutral',
+                    color: 'cyan',
+                    path: rpvPath
+                }
+            ];
+            
+            let html = '';
+            cards.forEach(card => {
+                html += `
+                    <div class="spark-card">
+                        <div class="spark-info">
+                            <div class="spark-label">${card.label}</div>
+                            <div class="spark-value">${card.value}</div>
+                            <div class="spark-change ${card.changeClass}">${card.change}</div>
+                        </div>
+                        <div class="sparkline-container">
+                            <svg viewBox="0 0 100 50">
+                                <path class="spark-area area-${card.color}" d="${card.path.area}"/>
+                                <path class="spark-line line-${card.color}" d="${card.path.line}"/>
+                            </svg>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('sparklineCards').innerHTML = html;
+        }
+        
+        // Google Sheets URLs
+        const BUSINESS_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIn3pdVIPjOSn7inbbT6FeunwN1RHMLoT3QWkW9-OmzJH9-UTEF3OmOOJYGtXmTxm6K27pf0FE7E9b/pub?gid=1110978664&single=true&output=csv';
+        const AD_CAMPAIGN_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRIn3pdVIPjOSn7inbbT6FeunwN1RHMLoT3QWkW9-OmzJH9-UTEF3OmOOJYGtXmTxm6K27pf0FE7E9b/pub?gid=1026635905&single=true&output=csv';
+
+        // Auto-load from Google Sheets
+        function autoLoadBusinessData() {
+            fetch(BUSINESS_DATA_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        console.log('Failed to fetch Google Sheet, trying local CSV');
+                        return fetch('All_Business_Data_for_Dashboard.csv').then(r => r.text());
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    if (csvText) {
+                        Papa.parse(csvText, {
+                            header: true,
+                            complete: function(results) {
+                                businessData = parseBusinessData(results.data);
+                                if (businessData.length > 0) {
+                                    // Hide upload section and show dashboard
+                                    document.getElementById('businessUploadSection').style.display = 'none';
+                                    updateBusinessDashboard();
+                                    console.log('Auto-loaded business data from Google Sheets');
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error parsing CSV:', error);
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.log('Google Sheets load failed, trying local CSV:', error);
+                    // Fallback to local CSV
+                    fetch('All_Business_Data_for_Dashboard.csv')
+                        .then(r => r.text())
+                        .then(csvText => {
+                            Papa.parse(csvText, {
+                                header: true,
+                                complete: function(results) {
+                                    businessData = parseBusinessData(results.data);
+                                    if (businessData.length > 0) {
+                                        document.getElementById('businessUploadSection').style.display = 'none';
+                                        updateBusinessDashboard();
+                                    }
+                                }
+                            });
+                        });
+                });
+        }
+        
+        // Auto-load combined Ad Campaign data from Google Sheets
+        function autoLoadCampaignData() {
+            fetch(AD_CAMPAIGN_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        console.log('Failed to fetch Google Sheet, trying local CSV');
+                        return fetch('Ad_Campaign_Data.csv').then(r => r.text());
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    if (csvText) {
+                        Papa.parse(csvText, {
+                            header: true,
+                            complete: function(results) {
+                                const parsed = parseCombinedCampaignData(results.data);
+                                metaData = parsed.metaData;
+                                googleData = parsed.googleData;
+                                console.log('Auto-loaded Ad Campaign data from Google Sheets');
+                                if (metaData && googleData) {
+                                    document.getElementById('campaignUploadSection').style.display = 'none';
+                                    updateCampaignDashboard();
+                                }
+                            },
+                            error: function(error) {
+                                console.error('Error parsing Ad Campaign CSV:', error);
+                            }
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.log('Google Sheets load failed, trying local CSV:', error);
+                    // Fallback to local CSV
+                    fetch('Ad_Campaign_Data.csv')
+                        .then(r => r.text())
+                        .then(csvText => {
+                            Papa.parse(csvText, {
+                                header: true,
+                                complete: function(results) {
+                                    const parsed = parseCombinedCampaignData(results.data);
+                                    metaData = parsed.metaData;
+                                    googleData = parsed.googleData;
+                                    if (metaData && googleData) {
+                                        document.getElementById('campaignUploadSection').style.display = 'none';
+                                        updateCampaignDashboard();
+                                    }
+                                }
+                            });
+                        });
+                });
+        }
+        
+        // Run auto-load when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            autoLoadBusinessData();
+            autoLoadCampaignData();
+        });
+        
+        // ==========================================
+        // AI CHAT FUNCTIONALITY
+        // ==========================================
+        
+        let chatHistory = [];
+        
+        function toggleChat() {
+            const panel = document.getElementById('chatPanel');
+            const toggle = document.getElementById('chatToggle');
+            panel.classList.toggle('open');
+            toggle.classList.toggle('active');
+            
+            if (panel.classList.contains('open')) {
+                document.getElementById('chatInput').focus();
+            }
+        }
+        
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+        
+        function buildDataContext() {
+            const margin = parseFloat(document.getElementById('businessMargin')?.value || 0.6);
+            let context = "Current dashboard data:\n\n";
+            
+            if (businessData && businessData.length > 0) {
+                const current = businessData[businessData.length - 1];
+                const totalAdSpend = current.googleSpend + current.metaSpend;
+                const totalAdRevenue = current.googleRevenue + current.metaRevenue;
+                const adNetProfit = (totalAdRevenue * margin) - totalAdSpend;
+                const adROAS = totalAdSpend > 0 ? totalAdRevenue / totalAdSpend : 0;
+                const breakevenRoas = 1 / margin;
+                
+                context += `CURRENT MONTH (${current.month}):\n`;
+                context += `- Total Business Sales: $${current.totalSales.toLocaleString()}\n`;
+                context += `- Website Sales: $${current.websiteSales.toLocaleString()}\n`;
+                context += `- Lucas Sales: $${current.lucasSales.toLocaleString()}\n`;
+                context += `- Affiliate Sales: $${current.affiliateSales.toLocaleString()}\n`;
+                context += `- Website Traffic: ${current.traffic.toLocaleString()} visitors\n`;
+                context += `- Days in period: ${current.days}\n\n`;
+                
+                context += `ADVERTISING (${current.month}):\n`;
+                context += `- Google Ads: Spend $${current.googleSpend.toLocaleString()}, Revenue $${current.googleRevenue.toLocaleString()}, ROAS ${(current.googleSpend > 0 ? current.googleRevenue / current.googleSpend : 0).toFixed(2)}x\n`;
+                context += `- Meta Ads: Spend $${current.metaSpend.toLocaleString()}, Revenue $${current.metaRevenue.toLocaleString()}, ROAS ${(current.metaSpend > 0 ? current.metaRevenue / current.metaSpend : 0).toFixed(2)}x\n`;
+                context += `- Combined: Spend $${totalAdSpend.toLocaleString()}, Revenue $${totalAdRevenue.toLocaleString()}, ROAS ${adROAS.toFixed(2)}x\n`;
+                context += `- Ad Net Profit: $${adNetProfit.toLocaleString()}\n`;
+                context += `- Break-even ROAS at ${(margin * 100)}% margin: ${breakevenRoas.toFixed(2)}x\n\n`;
+                
+                if (businessData.length > 1) {
+                    const prev = businessData[businessData.length - 2];
+                    const salesChange = ((current.totalSales - prev.totalSales) / prev.totalSales * 100).toFixed(1);
+                    const trafficChange = ((current.traffic - prev.traffic) / prev.traffic * 100).toFixed(1);
+                    context += `MONTH-OVER-MONTH CHANGE:\n`;
+                    context += `- Previous month (${prev.month}): $${prev.totalSales.toLocaleString()} in sales, ${prev.traffic.toLocaleString()} traffic\n`;
+                    context += `- Sales change: ${salesChange}%\n`;
+                    context += `- Traffic change: ${trafficChange}%\n\n`;
+                }
+                
+                context += `HISTORICAL DATA (${businessData.length} months):\n`;
+                businessData.forEach(m => {
+                    const mSpend = (m.googleSpend || 0) + (m.metaSpend || 0);
+                    const mRev = (m.googleRevenue || 0) + (m.metaRevenue || 0);
+                    const mRoas = mSpend > 0 ? (mRev / mSpend).toFixed(2) : 'N/A';
+                    const sales = m.totalSales || 0;
+                    const traffic = m.traffic || 0;
+                    context += `- ${m.month}: Sales $${sales.toLocaleString()}, Ad Spend $${mSpend.toLocaleString()}, Revenue from Ads $${mRev.toLocaleString()}, ROAS ${mRoas}x, Traffic ${traffic.toLocaleString()}\n`;
+                });
+            }
+            
+            if (metaData && metaData.campaigns && metaData.campaigns.length > 0) {
+                context += `\nMETA CAMPAIGNS:\n`;
+                metaData.campaigns.forEach(c => {
+                    const cost = c.cost || 0;
+                    const revenue = c.revenue || 0;
+                    const clicks = c.clicks || 0;
+                    const roas = cost > 0 ? (revenue / cost).toFixed(2) : 'N/A';
+                    context += `- ${c.name || 'Unknown'}: Spend $${cost.toLocaleString()}, Revenue $${revenue.toLocaleString()}, ROAS ${roas}x, Clicks ${clicks.toLocaleString()}\n`;
+                });
+            }
+            
+            if (googleData && googleData.campaigns && googleData.campaigns.length > 0) {
+                context += `\nGOOGLE CAMPAIGNS:\n`;
+                googleData.campaigns.forEach(c => {
+                    const cost = c.cost || 0;
+                    const revenue = c.revenue || 0;
+                    const clicks = c.clicks || 0;
+                    const roas = cost > 0 ? (revenue / cost).toFixed(2) : 'N/A';
+                    context += `- ${c.name || 'Unknown'}: Spend $${cost.toLocaleString()}, Revenue $${revenue.toLocaleString()}, ROAS ${roas}x, Clicks ${clicks.toLocaleString()}\n`;
+                });
+            }
+            
+            return context;
+        }
+        
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            const sendBtn = document.getElementById('chatSend');
+            const messagesContainer = document.getElementById('chatMessages');
+            
+            // Add user message
+            messagesContainer.innerHTML += `
+                <div class="chat-message user">
+                    <div class="message-content">${escapeHtml(message)}</div>
+                </div>
+            `;
+            
+            // Clear input and disable
+            input.value = '';
+            sendBtn.disabled = true;
+            
+            // Add loading message
+            const loadingId = 'loading-' + Date.now();
+            messagesContainer.innerHTML += `
+                <div class="chat-message assistant loading" id="${loadingId}">
+                    <div class="message-content">Thinking</div>
+                </div>
+            `;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Build context and chat history
+            const dataContext = buildDataContext();
+            chatHistory.push({ role: 'user', content: message });
+            
+            const systemPrompt = `You are a helpful AI assistant for the Aerovex business dashboard. You help users understand their business metrics, advertising performance, and trends.
+
+${dataContext}
+
+Guidelines:
+- Be concise and actionable in your responses
+- Use specific numbers from the data when relevant
+- Highlight important insights (good or concerning)
+- If asked about something not in the data, say so
+- Keep responses focused and under 150 words unless asked for detail
+- Use plain language, avoid jargon
+- Format currency as $X,XXX and percentages as X.X%`;
+
+            try {
+                const response = await fetch('/.netlify/functions/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        system: systemPrompt,
+                        messages: chatHistory
+                    })
+                });
+                
+                const data = await response.json();
+                const assistantMessage = data.content?.[0]?.text || 'Sorry, I had trouble processing that. Please try again.';
+                
+                // Add to history
+                chatHistory.push({ role: 'assistant', content: assistantMessage });
+                
+                // Replace loading with response
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) {
+                    loadingEl.classList.remove('loading');
+                    loadingEl.querySelector('.message-content').innerHTML = formatChatResponse(assistantMessage);
+                }
+                
+            } catch (error) {
+                console.error('Chat error:', error);
+                const loadingEl = document.getElementById(loadingId);
+                if (loadingEl) {
+                    loadingEl.classList.remove('loading');
+                    loadingEl.querySelector('.message-content').textContent = 'Sorry, I couldn\'t connect. Please try again.';
+                }
+            }
+            
+            sendBtn.disabled = false;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatChatResponse(text) {
+            // Convert markdown-style formatting to HTML
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/^/, '<p>')
+                .replace(/$/, '</p>');
+        }
+    </script>
+</body>
+</html>
