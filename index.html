@@ -2314,7 +2314,11 @@
             if (!metaData || !googleData) return;
             
             // Don't try to create charts if the canvas elements don't exist (tab not active)
-            if (!document.getElementById('campaignBubbleChart')) return;
+            if (!document.getElementById('campaignBubbleChart') || 
+                !document.getElementById('campaignProfitChart')) {
+                console.log('Campaign chart canvases not found, skipping chart creation');
+                return;
+            }
             
             const metrics = calculateCampaignMetrics();
             const allCampaigns = [
@@ -2705,7 +2709,12 @@
             if (!businessData || businessData.length === 0) return;
             
             // Don't try to create charts if the canvas elements don't exist (tab not active)
-            if (!document.getElementById('revenueChannelChart')) return;
+            if (!document.getElementById('revenueChannelChart') || 
+                !document.getElementById('revenueAttributionChart') || 
+                !document.getElementById('revenueLineChart')) {
+                console.log('Revenue chart canvases not found, skipping chart creation');
+                return;
+            }
             
             const months = businessData.map(d => d.month.split(' ')[0]); // Just month names
             const adRevenue = businessData.map(d => d.googleRevenue + d.metaRevenue);
@@ -3222,7 +3231,12 @@
             if (!businessData) return;
             
             // Don't try to create charts if the canvas elements don't exist (tab not active)
-            if (!document.getElementById('revenueChart')) return;
+            if (!document.getElementById('revenueChart') || 
+                !document.getElementById('adChart') || 
+                !document.getElementById('trafficChart')) {
+                console.log('Business chart canvases not found, skipping chart creation');
+                return;
+            }
             
             const months = businessData.map(d => d.month);
             const margin = parseFloat(document.getElementById('businessMargin').value);
@@ -3585,7 +3599,12 @@
             if (!businessData) return;
             
             // Don't try to create charts if the canvas elements don't exist (tab not active)
-            if (!document.getElementById('revenueTrendChart')) return;
+            if (!document.getElementById('revenueTrendChart') || 
+                !document.getElementById('roasTrendChart') || 
+                !document.getElementById('trafficTrendChart')) {
+                console.log('Trends chart canvases not found, skipping chart creation');
+                return;
+            }
             
             const months = businessData.map(d => d.month);
             const margin = parseFloat(document.getElementById('businessMargin').value);
